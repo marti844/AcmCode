@@ -30,178 +30,46 @@ inline void print(int x)
 
 ## 排序
 
-### 选择排序
+### 桶排序
 
 ```c++
-// C++ Version
-void selection_sort(int* a, int n) {
-  for (int i = 1; i < n; ++i) {
-    int ith = i;
-    for (int j = i + 1; j <= n; ++j) {
-      if (a[j] < a[ith]) {
-        ith = j;
-      }
-    }
-    std::swap(a[i], a[ith]);
-  }
-}
-```
-
-### 插入排序
-
-```c++
-// C++ Version
-void insertion_sort(int* a, int n) {
-  // 对 a[1],a[2],...,a[n] 进行插入排序
-  for (int i = 2; i <= n; ++i) {
-    int key = a[i];
-    int j = i - 1;
-    while (j > 0 && a[j] > key) {
-      a[j + 1] = a[j];
-      --j;
-    }
-    a[j + 1] = key;
-  }
-}
-```
-
-### 希尔排序
-
-```c++
-// C++ Version
-void shell_sort(int arr[], int len) {
-    int gap, i, j;
-    int temp;
-    for (gap = len >> 1; gap > 0; gap >>= 1)
-        for (i = gap; i < len; i++) {
-            temp = arr[i];
-            for (j = i - gap; j >= 0 && arr[j] > temp; j -= gap)
-                arr[j + gap] = arr[j];
-            arr[j + gap] = temp;
-        }
-}
-```
-
-### 堆排序
-
-```c++
-// C++ Version
-void sift_down(int arr[], int start, int end) {
-  // 计算父结点和子结点的下标
-  int parent = start;
-  int child = parent * 2 + 1;
-  while (child <= end) {  // 子结点下标在范围内才做比较
-    // 先比较两个子结点大小，选择最大的
-    if (child + 1 <= end && arr[child] < arr[child + 1]) child++;
-    // 如果父结点比子结点大，代表调整完毕，直接跳出函数
-    if (arr[parent] >= arr[child])
-      return;
-    else {  // 否则交换父子内容，子结点再和孙结点比较
-      swap(arr[parent], arr[child]);
-      parent = child;
-      child = parent * 2 + 1;
-    }
-  }
-}
-
-void heap_sort(int arr[], int len) {
-  // 从最后一个节点的父节点开始 sift down 以完成堆化 (heapify)
-  for (int i = (len - 1 - 1) / 2; i >= 0; i--) sift_down(arr, i, len - 1);
-  // 先将第一个元素和已经排好的元素前一位做交换，再重新调整（刚调整的元素之前的元素），直到排序完毕
-  for (int i = len - 1; i > 0; i--) {
-    swap(arr[0], arr[i]);
-    sift_down(arr, 0, i - 1);
-  }
-}
-```
-
-### 归并排序
-
-```c++
-// C++ version
-void merge(int l, int r) {
-  if (r - l <= 1) return;
-  int mid = l + ((r - l) >> 1);
-  merge(l, mid), merge(mid, r);
-  for (int i = l, j = mid, k = l; k < r; ++k) {
-    if (j == r || (i < mid && a[i] <= a[j]))
-      tmp[k] = a[i++];
-    else
-      tmp[k] = a[j++];
-  }
-  for (int i = l; i < r; ++i) a[i] = tmp[i];
-}
-```
-
-### 快速排序
-
-```c++
-void quick_sort(int a[],int s,int t)
-{
-    if(s==t)return;
-    //选择基准位置 一般为第一个
-    int tag=s;
-    int i=s,j=t;//两个游标
-    while(i<j)
-    {
-        while(a[j]>a[tag]&&j>tag)
-        {
-            j--;
-        }
-        swap(a[j],a[tag]);
-        tag=j;
-        
-        
-        while(a[i]<=a[tag]&&i<tag)
-        {
-            i++;
-        }
-        swap(a[i],a[tag]);
-        tag=i;
-    }
-    if(s<=tag-1)quick_sort(a,s,tag-1);
-    if(tag+1<=t)quick_sort(a,tag+1,t);
-
-}
-```
-
-### 基数排序
-
-```c++
-const int N = 100010;
-const int W = 100010;
-const int K = 100;
-
-int n, w[K], k, cnt[W];
-
-struct Element {
-  int key[K];
-
-  bool operator<(const Element& y) const {
-    // 两个元素的比较流程
-    for (int i = 1; i <= k; ++i) {
-      if (key[i] == y.key[i]) continue;
-      return key[i] < y.key[i];
-    }
-    return false;
-  }
-} a[N], b[N];
-
-void counting_sort(int p) {
-  memset(cnt, 0, sizeof(cnt));
-  for (int i = 1; i <= n; ++i) ++cnt[a[i].key[p]];
-  for (int i = 1; i <= w[p]; ++i) cnt[i] += cnt[i - 1];
-  // 为保证排序的稳定性，此处循环i应从n到1
-  // 即当两元素关键字的值相同时，原先排在后面的元素在排序后仍应排在后面
-  for (int i = n; i >= 1; --i) b[cnt[a[i].key[p]]--] = a[i];
-  memcpy(a, b, sizeof(a));
-}
-
-void radix_sort() {
-  for (int i = k; i >= 1; --i) {
-    // 借助计数排序完成对关键字的排序
-    counting_sort(i);
-  }
+int* sort_array(int *arr, int n) {
+    int i;
+	int maxValue = arr[0];
+	for (i = 1; i < n; i++) 
+		if (arr[i] > maxValue)  // 输入数据的最大值
+			maxValue = arr[i]; 
+	
+	// 设置10个桶，依次0，1，，，9
+	const int bucketCnt = 10;
+	vector<int> buckets[bucketCnt];
+	// 桶的大小bucketSize根据数组最大值确定：比如最大值99， 桶大小10
+	// 最大值999，桶大小100
+	// 根据最高位数字映射到相应的桶，映射函数为 arr[i]/bucketSize
+	int bucketSize = 1;
+	while (maxValue) {		//求最大尺寸 
+		maxValue /= 10;
+		bucketSize *= 10;
+	}
+	bucketSize /= 10;		//桶的个数 
+	// 入桶
+	for (int i=0; i<n; i++) {
+		int idx = arr[i]/bucketSize;			//放入对应的桶 
+		buckets[idx].push_back(arr[i]);
+		// 对该桶使用插入排序(因为数据过少，插入排序即可)，维持该桶的有序性
+		for (int j=int(buckets[idx].size())-1; j>0; j--) {
+			if (buckets[idx][j]<buckets[idx][j-1]) {
+				swap(buckets[idx][j], buckets[idx][j-1]);
+			}
+		}
+	}
+	// 顺序访问桶，得到有序数组
+	for (int i=0, k=0; i<bucketCnt; i++) {
+		for (int j=0; j<int(buckets[i].size()); j++) {
+			arr[k++] = buckets[i][j];
+		}
+	}
+	return arr;
 }
 ```
 
@@ -537,6 +405,30 @@ int gcd(int a, int b){
 int lmp(int a,int b){
    return a*b/gcd(a,b);
 }
+```
+
+### 欧拉筛
+
+```c++
+#define n 10000
+
+bool vis[n];//标记
+int prim[n];//储存素数
+int num=0;//素数数量
+
+void getprim()
+{
+    memset(vis,true,sizeof(vis));//初始化为全体素数
+    vis[0]=vis[1]=false;//01不是素数
+    for(int i=2;i<=n;i++){
+        if(vis[i]) prim[++num]=i;
+        for(int j=1;j<=num&&i*prim[j]<=n;j++){//合数在给定范围内
+            vis[i*prim[j]]=false;
+            if(i%prim[j]==0) break;
+        }
+    }
+}
+
 ```
 
 ## 字符串
