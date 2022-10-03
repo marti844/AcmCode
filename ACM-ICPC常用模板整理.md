@@ -113,72 +113,98 @@ long long getsum1(int l, int r) {
 ### 线段树
 
 ```c++
-#include<bits/stdc++.h>
-#define ll long long
+#include <iostream>
+
 using namespace std;
-const ll N=100100;
-ll n,m,a[N];
-struct tree{
-	ll l,r;
-	ll pre,add;
-}t[4*N];
-void build_tree(ll p,ll l,ll r){
-	t[p].l=l,t[p].r=r;
-	if( l==r ) {
-		scanf("&lld",&t[p].pre);
-		return ;
-	}
-	ll mid=(l+r)/2;
-	build_tree(p*2,l,mid);
-	build_tree(p*2+1,mid+1,r);
-	t[p].pre=t[p*2].pre+t[p*2+1].pre;
+
+typedef long long LL;
+
+const int N = 100010;
+
+int n, m;  // 数列长度、操作个数
+int a[N];  // 输入的数组
+struct Node {
+    int l, r;
+    LL sum;  // 如果考虑当前节点及子节点上的所有标记，其区间[l, r]的总和就是sum
+    LL add;  // 懒标记，表示需要给以当前节点为根的子树中的每一个节点都加上add这个数(不包含当前节点)
+} tr[N * 4];
+
+// 由子节点的信息，来计算父节点的信息
+void pushup(int u) {
+    tr[u].sum = tr[u << 1].sum + tr[u << 1 | 1].sum;
 }
-void lazy_tag(ll p){
-	if( t[p].add ) {
-		t[p*2].pre+=t[p].add*(t[p*2].r-t[p*2].l+1);
-		t[p*2+1].pre+=t[p].add*(t[p*2+1].r-t[p*2+1].l+1);
-		t[p*2].add+=t[p].add;
-		t[p*2+1].add+=t[p].add;
-		t[p].add=0;
-	}
+
+// 把当前父节点的修改信息下传到子节点，也被称为懒标记（延迟标记）
+void pushdown(int u) {
+    
+    auto &root = tr[u], &left = tr[u << 1], &right = tr[u << 1 | 1];
+    if (root.add) {
+        left.add += root.add, left.sum += (LL)(left.r - left.l + 1) * root.add;
+        right.add += root.add, right.sum += (LL)(right.r - right.l + 1) * root.add;
+        root.add = 0;
+    }
 }
-void update(ll p,ll x,ll y,ll z){
-	if( x<=t[p].l && y>=t[p].r ) {
-		t[p].pre+=(ll)z*(t[p].r-t[p].l+1);
-		t[p].add+=z;
-		return;
-	}
-	lazy_tag(p);
-	ll mid=(t[p].l+t[p].r)/2;
-	if( x<=mid ) update(p*2,x,y,z);
-	if( y>mid ) update(p*2+1,x,y,z);
-	t[p].pre=t[p*2].pre+t[p*2+1].pre;
+
+// 创建线段树
+void build(int u, int l, int r) {
+    
+    if (l == r) tr[u] = {l, r, a[l], 0};
+    else {
+        tr[u] = {l, r};
+        int mid = l + r >> 1;
+        build(u << 1, l, mid), build(u << 1 | 1, mid + 1, r);
+        pushup(u);
+    }
 }
-ll query(ll p,ll x,ll y){
-	if( x<=t[p].l && y>=t[p].r ) return t[p].pre;
-	lazy_tag(p);
-	ll mid=(t[p].l+t[p].r)/2;
-	ll ans=0;
-	if( x<=mid ) ans+=query(p*2,x,y);
-	if( y>mid ) ans+=query(p*2+1,x,y);
-	return ans;
+
+// 将a[l~r]都加上d
+void modify(int u, int l, int r, LL d) {
+    
+    if (tr[u].l >= l && tr[u].r <= r) {
+        tr[u].sum += (LL)(tr[u].r - tr[u].l + 1) * d;
+        tr[u].add += d;
+    } else {  // 一定要分裂
+        pushdown(u);
+        int mid = tr[u].l + tr[u].r >> 1;
+        if (l <= mid) modify(u << 1, l, r, d);
+        if (r > mid) modify(u << 1 | 1, l, r, d);
+        pushup(u);
+    }
 }
-int main(){
-	scanf("%lld%lld",&n,&m);
-	build_tree(1,1,n);
-	for(ll i=1;i<=m;i++){
-		ll p,x,y,k;
-		scanf("%lld",&p);
-		if( p==1 ){
-			scanf("%lld%lld%lld",&x,&y,&k);
-			update(1,x,y,k);
-		} 
-		if( p==2 ){
-			scanf("%lld%lld",&x,&y);
-			printf("%lld\n",query(1,x,y));
-		} 
-	}
-	return 0;
+
+// 返回a[l~r]元素之和
+LL query(int u, int l, int r) {
+    
+    if (tr[u].l >= l && tr[u].r <= r) return tr[u].sum;
+    
+    pushdown(u);
+    int mid = tr[u].l + tr[u].r >> 1;
+    LL sum = 0;
+    if (l <= mid) sum += query(u << 1, l, r);
+    if (r > mid) sum += query(u << 1 | 1, l, r);
+    return sum;
+}
+
+int main() {
+    
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
+    
+    build(1, 1, n);
+    
+    char op[2];
+    int l, r, d;
+    while (m--) {
+        scanf("%s%d%d", op, &l, &r);
+        if (*op == 'C') {
+            scanf("%d", &d);
+            modify(1, l, r, d);
+        } else {
+            printf("%lld\n", query(1, l, r));
+        }
+    }
+    
+    return 0;
 }
 
 ```
