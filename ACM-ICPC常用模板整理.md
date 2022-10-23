@@ -110,103 +110,323 @@ long long getsum1(int l, int r) {
 }
 ```
 
-### 线段树
+### 树链剖分+线段树维护
 
 ```c++
-#include <iostream>
-
+#include <bits/stdc++.h>
+#define int long long
 using namespace std;
+const int N = 100050;
 
-typedef long long LL;
+int a[N];						   //线段树的基础数组
+int n, m;						   // n为节点数，m为操作数
+int op;							   //操作
+int fa[N], dep[N], siz[N], son[N]; // fa记录父节点，dep记录深度，siz记录子树节点数，son记录重儿子
+int head[N];
+int tim, dfn[N], top[N], v[N]; // tim为时间戳，dfn为节点在a数组的下标，top记录重链其实轻儿子的下标，v记录权值
+int cnt;
+int mod; //取模
+int r;	 //以哪个节点为根节点
 
-const int N = 100010;
+struct edge
+{
+	int t, nxt;
+} e[N];
 
-int n, m;  // 数列长度、操作个数
-int a[N];  // 输入的数组
-struct Node {
-    int l, r;
-    LL sum;  // 如果考虑当前节点及子节点上的所有标记，其区间[l, r]的总和就是sum
-    LL add;  // 懒标记，表示需要给以当前节点为根的子树中的每一个节点都加上add这个数(不包含当前节点)
-} tr[N * 4];
-
-// 由子节点的信息，来计算父节点的信息
-void pushup(int u) {
-    tr[u].sum = tr[u << 1].sum + tr[u << 1 | 1].sum;
+void init()
+{
+	memset(head, -1, sizeof head);
+	cnt = 0;
+	tim = 0;
 }
 
-// 把当前父节点的修改信息下传到子节点，也被称为懒标记（延迟标记）
-void pushdown(int u) {
-    
-    auto &root = tr[u], &left = tr[u << 1], &right = tr[u << 1 | 1];
-    if (root.add) {
-        left.add += root.add, left.sum += (LL)(left.r - left.l + 1) * root.add;
-        right.add += root.add, right.sum += (LL)(right.r - right.l + 1) * root.add;
-        root.add = 0;
-    }
+void add(int u, int v)
+{
+	e[++cnt].t = v;
+	e[cnt].nxt = head[u];
+	head[u] = cnt;
+}
+struct Node
+{
+	int l, r;
+	int sum1;
+	int sum2;
+	int t1, t2;
+	int maxn;
+	int minn;
+
+} tr[N << 2];
+
+void pushup(Node &u, Node &l, Node &r)
+{
+	u.sum1 = l.sum1 + r.sum1;
+	u.sum2 = l.sum2 + r.sum2;
+	u.maxn = max(l.maxn, r.maxn);
+	u.minn = min(l.minn, r.minn);
+}
+void pushup(int u)
+{ // 由子节点的信息，来计算父节点的信息
+	pushup(tr[u], tr[u << 1], tr[u << 1 | 1]);
 }
 
-// 创建线段树
-void build(int u, int l, int r) {
-    
-    if (l == r) tr[u] = {l, r, a[l], 0};
-    else {
-        tr[u] = {l, r};
-        int mid = l + r >> 1;
-        build(u << 1, l, mid), build(u << 1 | 1, mid + 1, r);
-        pushup(u);
-    }
+void eval(Node &t, int add, int mul)
+{
+	t.sum2 = t.sum2 * mul * mul;
+	t.sum2 += 2 * add * t.sum1 * mul + add * add * (t.r - t.l + 1);
+	t.sum1 = mul * t.sum1 + add * (t.r - t.l + 1);
+	t.t2 *= mul;
+	t.t1 = t.t1 * mul + add;
 }
 
-// 将a[l~r]都加上d
-void modify(int u, int l, int r, LL d) {
-    
-    if (tr[u].l >= l && tr[u].r <= r) {
-        tr[u].sum += (LL)(tr[u].r - tr[u].l + 1) * d;
-        tr[u].add += d;
-    } else {  // 一定要分裂
-        pushdown(u);
-        int mid = tr[u].l + tr[u].r >> 1;
-        if (l <= mid) modify(u << 1, l, r, d);
-        if (r > mid) modify(u << 1 | 1, l, r, d);
-        pushup(u);
-    }
+//懒标记
+void pushdown(int u)
+{
+	eval(tr[u << 1], tr[u].t1, tr[u].t2);
+	eval(tr[u << 1 | 1], tr[u].t1, tr[u].t2);
+	tr[u].t1 = 0, tr[u].t2 = 1;
 }
 
-// 返回a[l~r]元素之和
-LL query(int u, int l, int r) {
-    
-    if (tr[u].l >= l && tr[u].r <= r) return tr[u].sum;
-    
-    pushdown(u);
-    int mid = tr[u].l + tr[u].r >> 1;
-    LL sum = 0;
-    if (l <= mid) sum += query(u << 1, l, r);
-    if (r > mid) sum += query(u << 1 | 1, l, r);
-    return sum;
+// 节点tr[u]存储区间[l, r]的信息
+void build(int u, int l, int r)
+{
+	if (l == r)
+	{
+		tr[u] = {l, r, a[l], a[l] * a[l], 0, 1, a[l], a[l]};
+	} //储存信息
+	else
+	{
+		tr[u] = {l, r, 0, 0, 0, 1};
+		int mid = l + r >> 1;
+		build(u << 1, l, mid), build(u << 1 | 1, mid + 1, r);
+		pushup(u);
+	}
 }
 
-int main() {
-    
-    scanf("%d%d", &n, &m);
-    for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
-    
-    build(1, 1, n);
-    
-    char op[2];
-    int l, r, d;
-    while (m--) {
-        scanf("%s%d%d", op, &l, &r);
-        if (*op == 'C') {
-            scanf("%d", &d);
-            modify(1, l, r, d);
-        } else {
-            printf("%lld\n", query(1, l, r));
-        }
-    }
-    
-    return 0;
+int querysum1(int u, int l, int r) //求和
+{
+	auto &t = tr[u];
+	if (t.l >= l && t.r <= r)
+		return t.sum1 % mod;
+	else
+	{
+		pushdown(u);
+		int mid = t.l + t.r >> 1;
+		int res = 0;
+		if (l <= mid)
+			res = querysum1(u << 1, l, r) % mod;
+		if (r > mid)
+			res += querysum1(u << 1 | 1, l, r) % mod;
+		pushup(u);
+		return res % mod;
+	}
 }
 
+int querysum2(int u, int l, int r) //求平方和
+{
+	auto &t = tr[u];
+	if (t.l >= l && t.r <= r)
+		return t.sum2 % mod;
+	else
+	{
+		pushdown(u);
+		int mid = t.l + t.r >> 1;
+		int res = 0;
+		if (l <= mid)
+			res = querysum2(u << 1, l, r) % mod;
+		if (r > mid)
+			res += querysum2(u << 1 | 1, l, r) % mod;
+		pushup(u);
+		return res % mod;
+	}
+}
+int querymax(int u, int l, int r)
+{
+
+	if (tr[u].l >= l && tr[u].r <= r)
+		return tr[u].maxn; // 树中节点，已经被完全包含在[l, r]中了
+
+	int mid = tr[u].l + tr[u].r >> 1;
+	int v = -0x3f3f3f3f;
+	if (l <= mid)
+		v = querymax(u << 1, l, r);
+	if (r > mid)
+		v = max(v, querymax(u << 1 | 1, l, r)); // 右区间从mid+1开始
+
+	return v;
+}
+
+int querymin(int u, int l, int r)
+{
+
+	if (tr[u].l >= l && tr[u].r <= r)
+		return tr[u].minn; // 树中节点，已经被完全包含在[l, r]中了
+
+	int mid = tr[u].l + tr[u].r >> 1;
+	int v = 0x3f3f3f3f;
+	if (l <= mid)
+		v = querymin(u << 1, l, r);
+	if (r > mid)
+		v = min(v, querymin(u << 1 | 1, l, r)); // 右区间从mid+1开始
+
+	return v;
+}
+
+void modify1(int u, int l, int r, int d) //每个元素乘上一个数
+{
+	if (tr[u].l >= l && tr[u].r <= r)
+		eval(tr[u], 0, d);
+	else
+	{ // 一定要分裂
+		pushdown(u);
+		int mid = tr[u].l + tr[u].r >> 1;
+		if (l <= mid)
+			modify1(u << 1, l, r, d);
+		if (r > mid)
+			modify1(u << 1 | 1, l, r, d);
+		pushup(u);
+	}
+}
+
+void modify2(int u, int l, int r, int d) //每个元素加上一个数
+{
+	if (tr[u].l >= l && tr[u].r <= r)
+		eval(tr[u], d, 1);
+	else
+	{ // 一定要分裂
+		pushdown(u);
+		int mid = tr[u].l + tr[u].r >> 1;
+		if (l <= mid)
+			modify2(u << 1, l, r, d);
+		if (r > mid)
+			modify2(u << 1 | 1, l, r, d);
+		pushup(u);
+	}
+}
+
+void dfs1(int u, int f)
+{
+	fa[u] = f;
+	dep[u] = dep[f] + 1;
+	siz[u] = 1;
+	int maxsize = -1;
+	for (int i = head[u]; ~i; i = e[i].nxt)
+	{
+		int v = e[i].t;
+		if (v == f)
+			continue;
+		dfs1(v, u);
+		siz[u] += siz[v];
+		if (siz[v] > maxsize)
+		{
+			maxsize = siz[v];
+			son[u] = v;
+		}
+	}
+}
+
+void dfs2(int u, int t)
+{
+	dfn[u] = ++tim;
+	top[u] = t;
+	a[tim] = v[u];
+	if (!son[u])
+		return;
+	dfs2(son[u], t);
+	for (int i = head[u]; ~i; i = e[i].nxt)
+	{
+		int v = e[i].t;
+		if (v == fa[u] || v == son[u])
+			continue;
+		dfs2(v, v);
+	}
+}
+
+void mson(int x, int z) //把以x为根的子树所有值加z
+{
+	modify2(1, dfn[x], dfn[x] + siz[x] - 1, z);
+}
+
+int qson(int x) //查询以x为根节点的子树的权值和
+{
+	return querysum1(1, dfn[x], dfn[x] + siz[x] - 1);
+}
+
+void mchain(int x, int y, int z) // x到y的最短路径上的所有节点权值加z
+{
+	z %= mod;
+	while (top[x] != top[y])
+	{
+		if (dep[top[x]] < dep[top[y]])
+			swap(x, y);
+		modify2(1, dfn[top[x]], dfn[x], z);
+		x = fa[top[x]];
+	}
+	if (dep[x] > dep[y])
+		swap(x, y);
+	modify2(1, dfn[x], dfn[y], z);
+}
+
+int qchain(int x, int y) // x到y最短路径的所有节点权值和
+{
+	int ret = 0;
+	while (top[x] != top[y])
+	{
+		if (dep[top[x]] < dep[top[y]])
+			swap(x, y);
+		ret += querysum1(1, dfn[top[x]], dfn[x]);
+		x = fa[top[x]];
+	}
+	if (dep[x] > dep[y])
+		swap(x, y);
+	ret += querysum1(1, dfn[x], dfn[y]);
+	return ret % mod;
+}
+
+signed main()
+{
+	scanf("%lld%lld%lld%lld", &n, &m, &r, &mod);
+	for (int i = 1; i <= n; i++)
+		scanf("%lld", &v[i]);
+	int x, y, z;
+	init();
+	for (int i = 1; i <= n - 1; i++)
+	{
+		scanf("%lld%lld", &x, &y);
+		add(x, y);
+		add(y, x);
+	}
+	dfs1(r, r);
+	dfs2(r, r);
+	build(1, 1, n);
+	for (int i = 1; i <= m; i++)
+	{
+		int op;
+		cin >> op;
+		if (op == 1)
+		{
+			cin >> x >> y >> z;
+			mchain(x, y, z);
+		}
+		else if (op == 2)
+		{
+			cin >> x >> y;
+			cout << qchain(x, y) << endl;
+		}
+		else if (op == 3)
+		{
+			cin >> x >> z;
+			mson(x, z);
+		}
+		else
+		{
+			cin >> x;
+			cout << qson(x) << endl;
+		}
+	}
+	// for(int i=1;i<=n;i++) cout<<a[i]<<endl;
+	system("pause");
+	return 0;
+}
 ```
 
 ### 序列分块
@@ -286,7 +506,7 @@ void dijkstra(int n)
     dis[1]=0;
     while(!q.empty())
     {
-        pair<int,int> temp = q.top();//记录堆顶，即堆内最小的边并将其弹出 
+        pii temp = q.top();//记录堆顶，即堆内最小的边并将其弹出 
         q.pop();
         int u = temp.second;//点 
         if(vis[u]) continue;//如果被访问过，就跳过 
@@ -398,10 +618,54 @@ int Kruskal()
 }
 ```
 
-#### 树剖
+### 网络流
+
+#### Dinic
 
 ```c++
+// 注意建图操作cnt从1开始！！！建图的同时建边权为零的反图
+int dep[maxn],no[maxn];// 弧优化
 
+inline bool bfs(){
+	for(int i=1;i<=n;++i)dep[i]=INF;
+	dep[s]=0;
+	queue<int> q;
+	q.push(s);
+	no[s]=head[s];
+	while(!q.empty()){
+		int now=q.front();
+		q.pop();
+		for(int i=head[now];~i;i=edge[i].nxt){
+			int to=edge[i].to;
+			if(edge[i].val>0&&dep[to]==INF){
+				q.push(to);
+				no[to]=head[to];
+				dep[to]=dep[now]+1;
+				if(to==t)return true;
+			}
+		}
+	}
+	return false;
+}
+
+inline int dinic(int x,ll flow){
+	if(x==t)return flow;
+	ll tmp,sum=0;
+	for(int i=no[x];(~i)&&flow;i=edge[i].nxt){
+		no[x]=i;
+		int to=edge[i].to;
+		if(edge[i].val>0&&(dep[to]==dep[x]+1)){
+			tmp=dinic(to,min(flow,edge[i].val));
+			if(tmp==0)dep[to]=INF; //剪枝
+			flow-=tmp;
+			sum+=tmp;
+			edge[i].val-=tmp;
+			edge[i^1].val+=tmp;
+		}
+	}
+	// if(sum==0)return dep[x]=0;
+	return sum;
+}
 ```
 
 ## 数论
