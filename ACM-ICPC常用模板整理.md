@@ -531,7 +531,7 @@ signed main()
 
 ### 莫队
 
-### 倍增思想（LCA、ST表）
+### 倍增思想（ST表）
 
 ```c++
 // ST表
@@ -556,6 +556,79 @@ int main()
     cin >> n;
     for (int i = 1; i <= n;i++)
         cin >> ST[0][i];
+}
+```
+
+### 倍增思想（LCA）
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 500050;
+typedef long long ll;
+int fa[maxn][40], d[maxn], head[maxn];
+int lg[maxn];
+int n, m, s;
+int cnt;
+struct node
+{
+ int nex, t;
+} e[maxn*2];
+
+void add(int x, int y)
+{
+ e[++cnt].nex = head[x];
+ e[cnt].t = y;
+ head[x] = cnt;
+}
+
+void dfs(int f, int fath) // f表示当前节点，fath表示它的父亲节点
+{
+ d[f] = d[fath] + 1;
+ fa[f][0] = fath;
+ for (int i = 1; (1 << i) <= d[f]; i++)
+  fa[f][i] = fa[fa[f][i - 1]][i - 1]; //这个转移可以说是算法的核心之一
+           //意思是f的2^i祖先等于f的2^(i-1)祖先的2^(i-1)祖先
+           // 2^i=2^(i-1)+2^(i-1)
+ for (int i = head[f]; i; i = e[i].nex)
+  if (e[i].t != fath)
+   dfs(e[i].t, f);
+}
+
+int lca(int x, int y)
+{
+ if (d[x] < d[y]) //用数学语言来说就是：不妨设x的深度 >= y的深度
+  swap(x, y);
+ while (d[x] > d[y])
+  x = fa[x][lg[d[x] - d[y]] - 1]; //先跳到同一深度
+ if (x == y)         //如果x是y的祖先，那他们的LCA肯定就是x了
+  return x;
+ for (int k = lg[d[x]] - 1; k >= 0; k--) //不断向上跳（lg就是之前说的常数优化）
+  if (fa[x][k] != fa[y][k])    //因为我们要跳到它们LCA的下面一层，所以它们肯定不相等，如果不相等就跳过去。
+   x = fa[x][k], y = fa[y][k];
+ return fa[x][0]; //返回父节点
+}
+
+int main()
+{
+ cin >> n >> m >> s;
+ for (int i = 1; i <= n - 1; i++)
+ {
+  int x, y;
+  cin >> x >> y;
+  add(x, y);
+  add(y, x);
+ }
+ for (int i = 1; i <= n; i++)       //预先算出log_2(i)+1的值，用的时候直接调用就可以了
+  lg[i] = lg[i - 1] + (1 << lg[i - 1] == i); //看不懂的可以手推一下
+ dfs(s, s);
+ for (int i = 1; i <= m; i++)
+ {
+  int x, y;
+  cin >> x >> y;
+  cout << lca(x, y) << endl;
+ }
+ system("pause");
 }
 ```
 
