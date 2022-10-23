@@ -28,6 +28,104 @@ inline void print(int x)
 }
 ```
 
+## DP
+
+### 最长公共子序列(LCS)
+
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+int n;
+int a1[100010],a2[100010];
+int belong[100010];
+int f[100010],b[100010],len;
+int main()
+{
+    scanf("%d",&n);
+    for(int i=1;i<=n;i++)
+    {
+        scanf("%d",&a1[i]);
+        belong[a1[i]]=i;
+    }
+    for(int i=1;i<=n;i++)
+    scanf("%d",&a2[i]);
+    for(int i=1;i<=n;i++)
+    {
+        if(belong[a2[i]]>b[len])
+        {
+            b[++len]=belong[a2[i]];
+            f[i]=len;
+            continue;
+        }
+        int k=lower_bound(b+1,b+len+1,belong[a2[i]])-b;
+        b[k]=belong[a2[i]];
+        f[i]=k;
+    }
+    printf("%d\n",len);
+    return 0;
+}
+```
+
+### 状压dp
+
+```c++
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+const int maxn=160;
+int f[11][maxn][maxn];
+int num[maxn],s[maxn];
+int n,k,cnt;
+void init(){  //预处理一下没有其他行限制下每一行的可能情况有多少种
+	cnt=0;
+	for(int i=0;i<(1<<n);i++){
+		if(i&(i<<1)){   // 代表左右有相邻国王
+			continue;
+		}
+		int sum=0;
+		for(int j=0;j<n;j++){  //枚举一下i这个情况下哪些地方是国王
+			if(i&(1<<j)){
+				sum++;
+			}
+		}
+		s[++cnt]=i;  //s[cnt]代表了第cnt种情况下的状态  
+		num[cnt]=sum;
+	}
+//	cout<<"cnt "<<cnt<<"\n";
+}
+void solve(){
+	cin>>n>>k;
+	init();
+	f[0][1][0]=1;  //代表第0行在num[1]即放了0个国王的情况有1种
+	for(int i=1;i<=n;i++){  //枚举行
+		for(int j=1;j<=cnt;j++){  //枚举这一行有多少种情况
+			for(int l=0;l<=k;l++){   //枚举算上这一行的国王总数
+				if(l>=num[j]){  //算上这一行放的国王总数起码得大于等于这一行自己就有的国王个数
+					for(int t=1;t<=cnt;t++){  //枚举上一行的情况
+						//1.不能跟上一行有列重合 2.不能刚好差一行 
+						if(!(s[t]&s[j])&&!(s[t]&(s[j]<<1))&&!(s[t]&(s[j]>>1))){
+							f[i][j][l]+=f[i-1][t][l-num[j]];
+						}
+					}
+				}
+			}
+		}
+	}
+	int ans=0;
+	for(int i=1;i<=cnt;i++){
+		ans+=f[n][i][k];
+	}
+	cout<<ans<<"\n";
+}
+signed main(){
+	int t;
+	t=1;
+	while(t--){
+		solve();
+	}
+}
+```
+
 ## 排序
 
 ### 桶排序
