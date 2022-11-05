@@ -673,8 +673,8 @@ void dijkstra(int n)
   	typedef pair<int, int> pii;
     priority_queue<pii,vector<pii>,greater<pii> >q;
     memset(dis,0x3f,sizeof dis);
-    q.push({0,1});
-    dis[1]=0;
+    q.push(make_pair(0,t));
+    dis[t]=0;
     while(!q.empty())
     {
         pii temp = q.top();//记录堆顶，即堆内最小的边并将其弹出 
@@ -682,13 +682,13 @@ void dijkstra(int n)
         int u = temp.second;//点 
         if(vis[u]) continue;//如果被访问过，就跳过 
         vis[u]=true;//标记 
-        for(int i = head[u];i!=-1;i=edge[i].next)//搜索堆顶的所有连边 
+        for(int i = head[u];i!=-1;i=edge[i].nxt)//搜索堆顶的所有连边 
         {
-            int v = edge[i].v;
-            if(dis[v]>dis[u]+edge[i].w)//松弛操作 
+            int v = edge[i].to;
+            if(dis[v]>dis[u]+edge[i].val)//松弛操作 
             {
-                dis[v]=dis[u]+edge[i].w;
-                q.push({dis[v],v});//把新遍历的点加到堆中 
+                dis[v]=dis[u]+edge[i].val;
+                q.push(make_pair(dis[v],v));//把新遍历的点加到堆中 
             }
         }
     }
@@ -699,37 +699,29 @@ void dijkstra(int n)
 #### SPFA
 
 ```c++
-void spfa()
+inline bool spfa(int S, int V)
 {
-    for(int i=1;i<=n;i++)
-    dist[i]=INT_MAX;//题目要求初始化为2^31-1即int整型的最大范围
-
-    dist[s]=0;
-    queue<int>q;
-    q.push(s);
-    st[s]=true;
-
-    int t;
-    while (!q.empty())
-    {
-        t=q.front();
-        q.pop();
-        st[t]=false;
-
-        for(int i=h[t];i!=-1;i=ne[i])
-        {
-            int j=e[i];
-            if(dist[j]>dist[t]+w[i])
-            {
-                dist[j]=dist[t]+w[i];
-                if(!st[j])
-                {
-                    q.push(j);
-                    st[j]=true;
-                }
-            }
-        }
-    }    
+	for (int i = 1; i <= V; ++i) {
+		dis[i] = inf;
+		cnt[i] = 0;
+		vis[i] = 0;
+	}
+	vis[S] = 1; dis[S] = 0;
+	q.push(S);
+	while (!q.empty()) {
+		int u = q.front(); q.pop(); vis[u] = 0;
+		for (int i = head[u]; ~i; i = edge[i].nxt) {
+			int to = edge[i].to;
+			if (dis[to] > dis[u] + edge[i].val) {
+				dis[to] = dis[u] + edge[i].val;
+				if (!vis[to]) {
+					if (++cnt[to] >= V)return true;
+					vis[to] = 1; q.push(to);
+				}
+			}
+		}
+	}
+	return false;
 }
 ```
 
