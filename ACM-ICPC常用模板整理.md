@@ -879,6 +879,45 @@ int Kruskal()
 }
 ```
 
+### Tarjan
+
+#### 割点、桥
+
+#### 缩点
+
+```c++
+int dfn[maxn], low[maxn], dfncnt, st[maxn], in_stack[maxn], tp;
+int scc[maxn], sc;  // 结点 i 所在 SCC 的编号
+int sz[maxn];       // 强连通 i 的大小
+
+
+void tarjan(int u) {
+  	low[u] = dfn[u] = ++dfncnt, st[++tp] = u, in_stack[u] = 1;
+  	for (int i = head[u]; ~i; i = edge[i].nxt) {
+    	int v = edge[i].to;
+    	if (!dfn[v]) {
+      		tarjan(v);
+      		low[u] = min(low[u], low[v]);
+    	} else if (in_stack[v]) {
+      		low[u] = min(low[u], dfn[v]);
+    	}
+  	}
+  	if (dfn[u] == low[u]) {
+    	++sc;
+    	while (st[tp] != u) {
+      		scc[st[tp]] = sc;
+      		sz[sc]++;
+      		in_stack[st[tp]] = 0;
+      		--tp;
+    	}
+    	scc[st[tp]] = sc;
+    	sz[sc]++;
+    	in_stack[st[tp]] = 0;
+    	--tp;
+  	}
+}
+```
+
 ### 网络流
 
 #### Dinic
