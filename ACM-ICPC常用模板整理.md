@@ -881,7 +881,94 @@ int Kruskal()
 
 ### Tarjan
 
-#### 割点、桥
+#### 割点
+
+```c++
+// luogu P3388 【模板】割点（割顶）
+
+#include <bits/stdc++.h>
+using namespace std;
+const int inf = 0x3f3f3f3f;
+const int maxn = 2e4+10;
+int n, m, t, root;
+int ans = 0;
+
+int head[maxn], ct;
+struct Edge {
+	int val, to, nxt;
+}edge[maxn*10];
+
+inline void addedge(int s, int t) {
+	edge[++ct].to = t;
+	edge[ct].nxt = head[s];
+	head[s] = ct;
+}
+
+inline void init() {
+	memset(head, -1, sizeof head);
+	ct = 0;
+}
+
+int dfn[maxn], low[maxn], dfncnt, st[maxn], in_stack[maxn], tp;
+int scc[maxn], sc;  // 结点 i 所在 SCC 的编号
+int sz[maxn],ind[maxn],od[maxn];       // 强连通 i 的大小
+int is_cut[maxn];
+
+void tarjan(int u) {
+	low[u] = dfn[u] = ++dfncnt;
+	int cnt = 0;
+	for (int i = head[u]; ~i; i = edge[i].nxt) {
+    	int v = edge[i].to;
+		if (!dfn[v]) {
+			tarjan(v);
+			low[u] = min(low[u], low[v]);
+			if (low[v] >= dfn[u]) {
+				cnt++;
+				if (u != root || cnt > 1) {
+					is_cut[u] = 1;
+				}
+			}
+		}
+		else low[u] = min(low[u], dfn[v]);
+  	}
+}
+
+inline void solve() {
+	cin >> n >> m;
+	for (int i = 1; i <= m; ++i) {
+		int s, t;
+		cin >> s >> t;
+		if (s == t)continue;
+		addedge(s, t);
+		addedge(t, s);
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (dfn[i] == 0) {
+			root = i;
+			tarjan(i);
+		}
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (is_cut[i])ans++;
+	}
+	cout << ans << endl;
+	for (int i = 1; i <= n; ++i) {
+		if (is_cut[i])cout << i << " ";
+	}
+	return;
+}
+
+int main() {
+	ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+	int T;
+	T = 1;
+	while (T--) {
+		init();
+		solve();
+	}
+	return 0;
+}
+```
 
 #### 缩点
 
