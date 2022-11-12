@@ -1,6 +1,6 @@
 # ACM-ICPC常用模板整理
 
-<p align="right"> by 石珂安 </p>
+<p align="right"> by 石珂安 夏鹏 王子悦 </p>
 
 ## 读入输出
 
@@ -68,6 +68,10 @@ int main()
 
 ### 状压dp
 
+状态压缩动态规划，就是我们俗称的状压DP，是利用计算机二进制的性质来描述状态的一种DP方式。
+
+例题：在 n×n(1<=n<=10) 的棋盘上放 k(0<=k<n×n)个国王，国王可攻击相邻的 8 个格子，求使它们无法互相攻击的方案总数。
+
 ```c++
 #include<bits/stdc++.h>
 #define int long long
@@ -125,6 +129,151 @@ signed main(){
 	}
 }
 ```
+
+```c++
+    int sit[2000],gs[2000];
+    int cnt=0;
+    int n,yong;
+    long long f[10][2000][100]={0};
+    void dfs(int he,int sum,int node)//预处理出每一个状态
+    {
+        if(node>=n)//如果已经处理完毕（注意是大于等于）
+        {
+            sit[++cnt]=he;
+            gs[cnt]=sum;
+            return;//新建一个状态
+        }
+        dfs(he,sum,node+1);//不用第node个
+        dfs(he+(1<<node),sum+1,node+2);//用第node个，此时node要加2，及跳过下一个格子
+    }
+    int main()
+    {
+        scanf("%d%d",&n,&yong);
+        dfs(0,0,0);
+        for(int i=1;i<=cnt;i++)f[1][i][gs[i]]=1;//第一层的所有状态均是有1种情况的
+        for(int i=2;i<=n;i++)
+            for(int j=1;j<=cnt;j++)
+                for(int k=1;k<=cnt;k++)//枚举i、j、k
+                {
+                    if(sit[j]&sit[k])continue;
+                    if((sit[j]<<1)&sit[k])continue;
+                    if(sit[j]&(sit[k]<<1))continue;//排除不合法国王情况
+                    for(int s=yong;s>=gs[j];s--)f[i][j][s]+=f[i-1][k][s-gs[j]];//枚举s，计算f[i][j][s]
+                }
+        long long ans=0;
+        for(int i=1;i<=cnt;i++)ans+=f[n][i][yong];//统计最终答案，记得用long long
+        printf("%lld",ans);
+        return 0;
+}
+```
+
+### 区间DP
+
+```c++
+for(int len = 1;len<=n;len++){//枚举长度
+        for(int j = 1;j+len<=n+1;j++){//枚举起点，ends<=n
+            int ends = j+len - 1;
+            for(int i = j;i<ends;i++){//枚举分割点，更新小区间最优解
+                dp[j][ends] = min(dp[j][ends],dp[j][i]+dp[i+1][ends]+something);
+            }
+        }
+}
+```
+
+朴素区间dp（n^3)
+
+N堆石子摆成一条线。现要将石子有次序地合并成一堆。规定每次只能选相邻的2堆石子合并成新的一堆，并将新的一堆石子数记为该次合并的代价。计算将N堆石子合并成一堆的最小代价。
+
+```c++
+dp[j][ends] = min(dp[j][ends],dp[j][i]+dp[i+1][ends]+weigth[i][ends]);
+```
+
+### 数位DP
+
+```c++
+#include<iostream>
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define maxn 15
+int num;
+int* a = new int[maxn];
+int f[15];
+//int a[maxn];
+int b[maxn];//b保存第p为存的是那个数
+int ten[maxn];
+int L, R;
+int t;
+int dfs(int p, bool limit) {//p表示在第p位，limite表示此时是否处于限制位
+	if (p < 0) {
+		//for (int i = 2; i >= 0; i--)cout << b[i];//无限递归,记得加结束return
+		//cout << endl;
+		return 0;//搜索结束，返回
+	}
+	if (!limit && f[p] != -1) {//记忆化搜索，不处于限制位，并且f[p]被算过了
+		return f[p];
+	}
+	int up = limit ? a[p] : 9;//判断是否处于限制位，如果是就只能取到a[p]为，否则最高位能取到9
+ 
+	int ans = 0;
+ 
+	for (int i = 0; i <= up; i++) {
+		//b[p] = i;
+		if (i == 3) {
+			if (limit && i == up) {
+				ans += 1;
+				for (int j = p - 1; j >= 0; j--)//处于限制条件就把限制数下面全算上
+					ans += a[j] * ten[j];
+			}
+			else//如果不处于限制条件直接加上10的p次方
+				ans += ten[p];
+		}
+		else ans += dfs(p - 1, limit && i == up);//这里填a[p]可以填up也行，在处于限制的时候up等于a[p]
+ 
+	}
+	if (!limit)//记忆化搜索，如果没有处于限制条件就可以直接那算过一次的数直接用，能节省很多时间
+		f[p] = ans;
+	return ans;
+}
+ 
+int handle(int num) {
+	int p = 0;
+	while (num) {//把num中的每一位放入数组
+		a[p++] = num % 10;
+		num /= 10;
+	}
+	//说明a数组写进去了，但是读取无效数据是什么意思勒，之前好像不是这样的，解决办法，动态创建数组
+	/*for (int i = 0; i < p; i++) {
+		cout << a[i];
+	}*/
+	return dfs(p - 1, true);//对应的最高位为p-1位，为True表示没有处于限制位
+}
+ 
+void init() {
+	ten[0] = 1;
+	for (int i = 1; i < 15; i++) {
+		ten[i] = ten[i - 1] * 10;
+	}
+	memset(f, -1, sizeof(f));
+}
+int32_t  main() {
+	cin>>t;
+    while(t--){
+        cin>>L>>R;
+        //handle(23);
+	    init();//一定要记得初始化，TM的我在这卡了半个月
+	    cout << handle(R)-handle(L) << endl;
+	    delete[]a;
+    }
+    return 0;
+}
+```
+
+### 概率DP
+
+顾名思义，概率DP就是动态规划求概率的问题。一般来说，我们将dp数组存放的数据定义为到达此状态的概率，那么我们初值设置就是所有初始状态概率为1，最终答案就是终末状态dp值了。
+
+我们在进行状态转移时，是从初始状态向终末状态顺推，转移方程中大致思路是按照当前状态去往不同状态的位置概率转移更新DP，且大部分是加法。
 
 ## 排序
 
