@@ -1,6 +1,6 @@
 # ACM-ICPC常用模板整理
 
-<p align="right"> by 石珂安 </p>
+<p align="right"> by 石珂安 夏鹏 王子悦 </p>
 
 ## 读入输出
 
@@ -27,6 +27,253 @@ inline void print(int x)
 	putchar(x%10+'0');
 }
 ```
+
+## DP
+
+### 最长公共子序列(LCS)
+
+```c++
+#include<bits/stdc++.h>
+using namespace std;
+int n;
+int a1[100010],a2[100010];
+int belong[100010];
+int f[100010],b[100010],len;
+int main()
+{
+    scanf("%d",&n);
+    for(int i=1;i<=n;i++)
+    {
+        scanf("%d",&a1[i]);
+        belong[a1[i]]=i;
+    }
+    for(int i=1;i<=n;i++)
+    scanf("%d",&a2[i]);
+    for(int i=1;i<=n;i++)
+    {
+        if(belong[a2[i]]>b[len])
+        {
+            b[++len]=belong[a2[i]];
+            f[i]=len;
+            continue;
+        }
+        int k=lower_bound(b+1,b+len+1,belong[a2[i]])-b;
+        b[k]=belong[a2[i]];
+        f[i]=k;
+    }
+    printf("%d\n",len);
+    return 0;
+}
+```
+
+### 状压dp
+
+状态压缩动态规划，就是我们俗称的状压DP，是利用计算机二进制的性质来描述状态的一种DP方式。
+
+例题：在 n×n(1<=n<=10) 的棋盘上放 k(0<=k<n×n)个国王，国王可攻击相邻的 8 个格子，求使它们无法互相攻击的方案总数。
+
+```c++
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+const int maxn=160;
+int f[11][maxn][maxn];
+int num[maxn],s[maxn];
+int n,k,cnt;
+void init(){  //预处理一下没有其他行限制下每一行的可能情况有多少种
+	cnt=0;
+	for(int i=0;i<(1<<n);i++){
+		if(i&(i<<1)){   // 代表左右有相邻国王
+			continue;
+		}
+		int sum=0;
+		for(int j=0;j<n;j++){  //枚举一下i这个情况下哪些地方是国王
+			if(i&(1<<j)){
+				sum++;
+			}
+		}
+		s[++cnt]=i;  //s[cnt]代表了第cnt种情况下的状态  
+		num[cnt]=sum;
+	}
+//	cout<<"cnt "<<cnt<<"\n";
+}
+void solve(){
+	cin>>n>>k;
+	init();
+	f[0][1][0]=1;  //代表第0行在num[1]即放了0个国王的情况有1种
+	for(int i=1;i<=n;i++){  //枚举行
+		for(int j=1;j<=cnt;j++){  //枚举这一行有多少种情况
+			for(int l=0;l<=k;l++){   //枚举算上这一行的国王总数
+				if(l>=num[j]){  //算上这一行放的国王总数起码得大于等于这一行自己就有的国王个数
+					for(int t=1;t<=cnt;t++){  //枚举上一行的情况
+						//1.不能跟上一行有列重合 2.不能刚好差一行 
+						if(!(s[t]&s[j])&&!(s[t]&(s[j]<<1))&&!(s[t]&(s[j]>>1))){
+							f[i][j][l]+=f[i-1][t][l-num[j]];
+						}
+					}
+				}
+			}
+		}
+	}
+	int ans=0;
+	for(int i=1;i<=cnt;i++){
+		ans+=f[n][i][k];
+	}
+	cout<<ans<<"\n";
+}
+signed main(){
+	int t;
+	t=1;
+	while(t--){
+		solve();
+	}
+}
+```
+
+```c++
+    int sit[2000],gs[2000];
+    int cnt=0;
+    int n,yong;
+    long long f[10][2000][100]={0};
+    void dfs(int he,int sum,int node)//预处理出每一个状态
+    {
+        if(node>=n)//如果已经处理完毕（注意是大于等于）
+        {
+            sit[++cnt]=he;
+            gs[cnt]=sum;
+            return;//新建一个状态
+        }
+        dfs(he,sum,node+1);//不用第node个
+        dfs(he+(1<<node),sum+1,node+2);//用第node个，此时node要加2，及跳过下一个格子
+    }
+    int main()
+    {
+        scanf("%d%d",&n,&yong);
+        dfs(0,0,0);
+        for(int i=1;i<=cnt;i++)f[1][i][gs[i]]=1;//第一层的所有状态均是有1种情况的
+        for(int i=2;i<=n;i++)
+            for(int j=1;j<=cnt;j++)
+                for(int k=1;k<=cnt;k++)//枚举i、j、k
+                {
+                    if(sit[j]&sit[k])continue;
+                    if((sit[j]<<1)&sit[k])continue;
+                    if(sit[j]&(sit[k]<<1))continue;//排除不合法国王情况
+                    for(int s=yong;s>=gs[j];s--)f[i][j][s]+=f[i-1][k][s-gs[j]];//枚举s，计算f[i][j][s]
+                }
+        long long ans=0;
+        for(int i=1;i<=cnt;i++)ans+=f[n][i][yong];//统计最终答案，记得用long long
+        printf("%lld",ans);
+        return 0;
+}
+```
+
+### 区间DP
+
+```c++
+for(int len = 1;len<=n;len++){//枚举长度
+        for(int j = 1;j+len<=n+1;j++){//枚举起点，ends<=n
+            int ends = j+len - 1;
+            for(int i = j;i<ends;i++){//枚举分割点，更新小区间最优解
+                dp[j][ends] = min(dp[j][ends],dp[j][i]+dp[i+1][ends]+something);
+            }
+        }
+}
+```
+
+朴素区间dp（n^3)
+
+N堆石子摆成一条线。现要将石子有次序地合并成一堆。规定每次只能选相邻的2堆石子合并成新的一堆，并将新的一堆石子数记为该次合并的代价。计算将N堆石子合并成一堆的最小代价。
+
+```c++
+dp[j][ends] = min(dp[j][ends],dp[j][i]+dp[i+1][ends]+weigth[i][ends]);
+```
+
+### 数位DP
+
+```c++
+#include<iostream>
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define maxn 15
+int num;
+int* a = new int[maxn];
+int f[15];
+//int a[maxn];
+int b[maxn];//b保存第p为存的是那个数
+int ten[maxn];
+int L, R;
+int t;
+int dfs(int p, bool limit) {//p表示在第p位，limite表示此时是否处于限制位
+	if (p < 0) {
+		//for (int i = 2; i >= 0; i--)cout << b[i];//无限递归,记得加结束return
+		//cout << endl;
+		return 0;//搜索结束，返回
+	}
+	if (!limit && f[p] != -1) {//记忆化搜索，不处于限制位，并且f[p]被算过了
+		return f[p];
+	}
+	int up = limit ? a[p] : 9;//判断是否处于限制位，如果是就只能取到a[p]为，否则最高位能取到9
+ 
+	int ans = 0;
+ 
+	for (int i = 0; i <= up; i++) {
+		//b[p] = i;
+		if (i == 3) {
+			if (limit && i == up) {
+				ans += 1;
+				for (int j = p - 1; j >= 0; j--)//处于限制条件就把限制数下面全算上
+					ans += a[j] * ten[j];
+			}
+			else//如果不处于限制条件直接加上10的p次方
+				ans += ten[p];
+		}
+		else ans += dfs(p - 1, limit && i == up);//这里填a[p]可以填up也行，在处于限制的时候up等于a[p]
+ 
+	}
+	if (!limit)//记忆化搜索，如果没有处于限制条件就可以直接那算过一次的数直接用，能节省很多时间
+		f[p] = ans;
+	return ans;
+}
+ 
+int handle(int num) {
+	int p = 0;
+	while (num) {//把num中的每一位放入数组
+		a[p++] = num % 10;
+		num /= 10;
+	}
+	//说明a数组写进去了，但是读取无效数据是什么意思勒，之前好像不是这样的，解决办法，动态创建数组
+	/*for (int i = 0; i < p; i++) {
+		cout << a[i];
+	}*/
+	return dfs(p - 1, true);//对应的最高位为p-1位，为True表示没有处于限制位
+}
+ 
+void init() {
+	ten[0] = 1;
+	for (int i = 1; i < 15; i++) {
+		ten[i] = ten[i - 1] * 10;
+	}
+	memset(f, -1, sizeof(f));
+}
+int32_t  main() {
+	cin>>t;
+    while(t--){
+        cin>>L>>R;
+        //handle(23);
+	    init();//一定要记得初始化，TM的我在这卡了半个月
+	    cout << handle(R)-handle(L) << endl;
+	    delete[]a;
+    }
+    return 0;
+}
+```
+
+### 概率DP
+
+顾名思义，概率DP就是动态规划求概率的问题。一般来说，我们将dp数组存放的数据定义为到达此状态的概率，那么我们初值设置就是所有初始状态概率为1，最终答案就是终末状态dp值了。
+
+我们在进行状态转移时，是从初始状态向终末状态顺推，转移方程中大致思路是按照当前状态去往不同状态的位置概率转移更新DP，且大部分是加法。
 
 ## 排序
 
@@ -113,81 +360,425 @@ long long getsum1(int l, int r) {
 ### 线段树
 
 ```c++
-#include<bits/stdc++.h>
-#define ll long long
+#include <iostream>
+
 using namespace std;
-const ll N=100100;
-ll n,m,a[N];
-struct tree{
-	ll l,r;
-	ll pre,add;
-}t[4*N];
-void build_tree(ll p,ll l,ll r){
-	t[p].l=l,t[p].r=r;
-	if( l==r ) {
-		scanf("&lld",&t[p].pre);
-		return ;
-	}
-	ll mid=(l+r)/2;
-	build_tree(p*2,l,mid);
-	build_tree(p*2+1,mid+1,r);
-	t[p].pre=t[p*2].pre+t[p*2+1].pre;
-}
-void lazy_tag(ll p){
-	if( t[p].add ) {
-		t[p*2].pre+=t[p].add*(t[p*2].r-t[p*2].l+1);
-		t[p*2+1].pre+=t[p].add*(t[p*2+1].r-t[p*2+1].l+1);
-		t[p*2].add+=t[p].add;
-		t[p*2+1].add+=t[p].add;
-		t[p].add=0;
-	}
-}
-void update(ll p,ll x,ll y,ll z){
-	if( x<=t[p].l && y>=t[p].r ) {
-		t[p].pre+=(ll)z*(t[p].r-t[p].l+1);
-		t[p].add+=z;
-		return;
-	}
-	lazy_tag(p);
-	ll mid=(t[p].l+t[p].r)/2;
-	if( x<=mid ) update(p*2,x,y,z);
-	if( y>mid ) update(p*2+1,x,y,z);
-	t[p].pre=t[p*2].pre+t[p*2+1].pre;
-}
-ll query(ll p,ll x,ll y){
-	if( x<=t[p].l && y>=t[p].r ) return t[p].pre;
-	lazy_tag(p);
-	ll mid=(t[p].l+t[p].r)/2;
-	ll ans=0;
-	if( x<=mid ) ans+=query(p*2,x,y);
-	if( y>mid ) ans+=query(p*2+1,x,y);
-	return ans;
-}
-int main(){
-	scanf("%lld%lld",&n,&m);
-	build_tree(1,1,n);
-	for(ll i=1;i<=m;i++){
-		ll p,x,y,k;
-		scanf("%lld",&p);
-		if( p==1 ){
-			scanf("%lld%lld%lld",&x,&y,&k);
-			update(1,x,y,k);
-		} 
-		if( p==2 ){
-			scanf("%lld%lld",&x,&y);
-			printf("%lld\n",query(1,x,y));
-		} 
-	}
-	return 0;
+
+typedef long long LL;
+
+const int N = 100010;
+
+int n, m;  // 数列长度、操作个数
+int a[N];  // 输入的数组
+struct Node {
+    int l, r;
+    LL sum;  // 如果考虑当前节点及子节点上的所有标记，其区间[l, r]的总和就是sum
+    LL add;  // 懒标记，表示需要给以当前节点为根的子树中的每一个节点都加上add这个数(不包含当前节点)
+} tr[N * 4];
+
+// 由子节点的信息，来计算父节点的信息
+void pushup(int u) {
+    tr[u].sum = tr[u << 1].sum + tr[u << 1 | 1].sum;
 }
 
+// 把当前父节点的修改信息下传到子节点，也被称为懒标记（延迟标记）
+void pushdown(int u) {
+    
+    auto &root = tr[u], &left = tr[u << 1], &right = tr[u << 1 | 1];
+    if (root.add) {
+        left.add += root.add, left.sum += (LL)(left.r - left.l + 1) * root.add;
+        right.add += root.add, right.sum += (LL)(right.r - right.l + 1) * root.add;
+        root.add = 0;
+    }
+}
+
+// 创建线段树
+void build(int u, int l, int r) {
+    
+    if (l == r) tr[u] = {l, r, a[l], 0};
+    else {
+        tr[u] = {l, r};
+        int mid = l + r >> 1;
+        build(u << 1, l, mid), build(u << 1 | 1, mid + 1, r);
+        pushup(u);
+    }
+}
+
+// 将a[l~r]都加上d
+void modify(int u, int l, int r, LL d) {
+    
+    if (tr[u].l >= l && tr[u].r <= r) {
+        tr[u].sum += (LL)(tr[u].r - tr[u].l + 1) * d;
+        tr[u].add += d;
+    } else {  // 一定要分裂
+        pushdown(u);
+        int mid = tr[u].l + tr[u].r >> 1;
+        if (l <= mid) modify(u << 1, l, r, d);
+        if (r > mid) modify(u << 1 | 1, l, r, d);
+        pushup(u);
+    }
+}
+
+// 返回a[l~r]元素之和
+LL query(int u, int l, int r) {
+    
+    if (tr[u].l >= l && tr[u].r <= r) return tr[u].sum;
+    
+    pushdown(u);
+    int mid = tr[u].l + tr[u].r >> 1;
+    LL sum = 0;
+    if (l <= mid) sum += query(u << 1, l, r);
+    if (r > mid) sum += query(u << 1 | 1, l, r);
+    return sum;
+}
+
+int main() {
+    
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
+    
+    build(1, 1, n);
+    
+    char op[2];
+    int l, r, d;
+    while (m--) {
+        scanf("%s%d%d", op, &l, &r);
+        if (*op == 'C') {
+            scanf("%d", &d);
+            modify(1, l, r, d);
+        } else {
+            printf("%lld\n", query(1, l, r));
+        }
+    }
+    
+    return 0;
+}
+```
+
+### 树链剖分+线段树维护
+
+```c++
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+const int N = 100050;
+
+int a[N];						   //线段树的基础数组
+int n, m;						   // n为节点数，m为操作数
+int op;							   //操作
+int fa[N], dep[N], siz[N], son[N]; // fa记录父节点，dep记录深度，siz记录子树节点数，son记录重儿子
+int head[N];
+int tim, dfn[N], top[N], v[N]; // tim为时间戳，dfn为节点在a数组的下标，top记录重链其实轻儿子的下标，v记录权值
+int cnt;
+int mod; //取模
+int r;	 //以哪个节点为根节点
+
+struct edge
+{
+	int t, nxt;
+} e[N];
+
+void init()
+{
+	memset(head, -1, sizeof head);
+	cnt = 0;
+	tim = 0;
+}
+
+void add(int u, int v)
+{
+	e[++cnt].t = v;
+	e[cnt].nxt = head[u];
+	head[u] = cnt;
+}
+struct Node
+{
+	int l, r;
+	int sum1;
+	int sum2;
+	int t1, t2;
+	int maxn;
+	int minn;
+
+} tr[N << 2];
+
+void pushup(Node &u, Node &l, Node &r)
+{
+	u.sum1 = l.sum1 + r.sum1;
+	u.sum2 = l.sum2 + r.sum2;
+	u.maxn = max(l.maxn, r.maxn);
+	u.minn = min(l.minn, r.minn);
+}
+void pushup(int u)
+{ // 由子节点的信息，来计算父节点的信息
+	pushup(tr[u], tr[u << 1], tr[u << 1 | 1]);
+}
+
+void eval(Node &t, int add, int mul)
+{
+	t.sum2 = t.sum2 * mul * mul;
+	t.sum2 += 2 * add * t.sum1 * mul + add * add * (t.r - t.l + 1);
+	t.sum1 = mul * t.sum1 + add * (t.r - t.l + 1);
+	t.t2 *= mul;
+	t.t1 = t.t1 * mul + add;
+}
+
+//懒标记
+void pushdown(int u)
+{
+	eval(tr[u << 1], tr[u].t1, tr[u].t2);
+	eval(tr[u << 1 | 1], tr[u].t1, tr[u].t2);
+	tr[u].t1 = 0, tr[u].t2 = 1;
+}
+
+// 节点tr[u]存储区间[l, r]的信息
+void build(int u, int l, int r)
+{
+	if (l == r)
+	{
+		tr[u] = {l, r, a[l], a[l] * a[l], 0, 1, a[l], a[l]};
+	} //储存信息
+	else
+	{
+		tr[u] = {l, r, 0, 0, 0, 1};
+		int mid = l + r >> 1;
+		build(u << 1, l, mid), build(u << 1 | 1, mid + 1, r);
+		pushup(u);
+	}
+}
+
+int querysum1(int u, int l, int r) //求和
+{
+	auto &t = tr[u];
+	if (t.l >= l && t.r <= r)
+		return t.sum1 % mod;
+	else
+	{
+		pushdown(u);
+		int mid = t.l + t.r >> 1;
+		int res = 0;
+		if (l <= mid)
+			res = querysum1(u << 1, l, r) % mod;
+		if (r > mid)
+			res += querysum1(u << 1 | 1, l, r) % mod;
+		pushup(u);
+		return res % mod;
+	}
+}
+
+int querysum2(int u, int l, int r) //求平方和
+{
+	auto &t = tr[u];
+	if (t.l >= l && t.r <= r)
+		return t.sum2 % mod;
+	else
+	{
+		pushdown(u);
+		int mid = t.l + t.r >> 1;
+		int res = 0;
+		if (l <= mid)
+			res = querysum2(u << 1, l, r) % mod;
+		if (r > mid)
+			res += querysum2(u << 1 | 1, l, r) % mod;
+		pushup(u);
+		return res % mod;
+	}
+}
+int querymax(int u, int l, int r)
+{
+
+	if (tr[u].l >= l && tr[u].r <= r)
+		return tr[u].maxn; // 树中节点，已经被完全包含在[l, r]中了
+
+	int mid = tr[u].l + tr[u].r >> 1;
+	int v = -0x3f3f3f3f;
+	if (l <= mid)
+		v = querymax(u << 1, l, r);
+	if (r > mid)
+		v = max(v, querymax(u << 1 | 1, l, r)); // 右区间从mid+1开始
+
+	return v;
+}
+
+int querymin(int u, int l, int r)
+{
+
+	if (tr[u].l >= l && tr[u].r <= r)
+		return tr[u].minn; // 树中节点，已经被完全包含在[l, r]中了
+
+	int mid = tr[u].l + tr[u].r >> 1;
+	int v = 0x3f3f3f3f;
+	if (l <= mid)
+		v = querymin(u << 1, l, r);
+	if (r > mid)
+		v = min(v, querymin(u << 1 | 1, l, r)); // 右区间从mid+1开始
+
+	return v;
+}
+
+void modify1(int u, int l, int r, int d) //每个元素乘上一个数
+{
+	if (tr[u].l >= l && tr[u].r <= r)
+		eval(tr[u], 0, d);
+	else
+	{ // 一定要分裂
+		pushdown(u);
+		int mid = tr[u].l + tr[u].r >> 1;
+		if (l <= mid)
+			modify1(u << 1, l, r, d);
+		if (r > mid)
+			modify1(u << 1 | 1, l, r, d);
+		pushup(u);
+	}
+}
+
+void modify2(int u, int l, int r, int d) //每个元素加上一个数
+{
+	if (tr[u].l >= l && tr[u].r <= r)
+		eval(tr[u], d, 1);
+	else
+	{ // 一定要分裂
+		pushdown(u);
+		int mid = tr[u].l + tr[u].r >> 1;
+		if (l <= mid)
+			modify2(u << 1, l, r, d);
+		if (r > mid)
+			modify2(u << 1 | 1, l, r, d);
+		pushup(u);
+	}
+}
+
+void dfs1(int u, int f)
+{
+	fa[u] = f;
+	dep[u] = dep[f] + 1;
+	siz[u] = 1;
+	int maxsize = -1;
+	for (int i = head[u]; ~i; i = e[i].nxt)
+	{
+		int v = e[i].t;
+		if (v == f)
+			continue;
+		dfs1(v, u);
+		siz[u] += siz[v];
+		if (siz[v] > maxsize)
+		{
+			maxsize = siz[v];
+			son[u] = v;
+		}
+	}
+}
+
+void dfs2(int u, int t)
+{
+	dfn[u] = ++tim;
+	top[u] = t;
+	a[tim] = v[u];
+	if (!son[u])
+		return;
+	dfs2(son[u], t);
+	for (int i = head[u]; ~i; i = e[i].nxt)
+	{
+		int v = e[i].t;
+		if (v == fa[u] || v == son[u])
+			continue;
+		dfs2(v, v);
+	}
+}
+
+void mson(int x, int z) //把以x为根的子树所有值加z
+{
+	modify2(1, dfn[x], dfn[x] + siz[x] - 1, z);
+}
+
+int qson(int x) //查询以x为根节点的子树的权值和
+{
+	return querysum1(1, dfn[x], dfn[x] + siz[x] - 1);
+}
+
+void mchain(int x, int y, int z) // x到y的最短路径上的所有节点权值加z
+{
+	z %= mod;
+	while (top[x] != top[y])
+	{
+		if (dep[top[x]] < dep[top[y]])
+			swap(x, y);
+		modify2(1, dfn[top[x]], dfn[x], z);
+		x = fa[top[x]];
+	}
+	if (dep[x] > dep[y])
+		swap(x, y);
+	modify2(1, dfn[x], dfn[y], z);
+}
+
+int qchain(int x, int y) // x到y最短路径的所有节点权值和
+{
+	int ret = 0;
+	while (top[x] != top[y])
+	{
+		if (dep[top[x]] < dep[top[y]])
+			swap(x, y);
+		ret += querysum1(1, dfn[top[x]], dfn[x]);
+		x = fa[top[x]];
+	}
+	if (dep[x] > dep[y])
+		swap(x, y);
+	ret += querysum1(1, dfn[x], dfn[y]);
+	return ret % mod;
+}
+
+signed main()
+{
+	scanf("%lld%lld%lld%lld", &n, &m, &r, &mod);
+	for (int i = 1; i <= n; i++)
+		scanf("%lld", &v[i]);
+	int x, y, z;
+	init();
+	for (int i = 1; i <= n - 1; i++)
+	{
+		scanf("%lld%lld", &x, &y);
+		add(x, y);
+		add(y, x);
+	}
+	dfs1(r, r);
+	dfs2(r, r);
+	build(1, 1, n);
+	for (int i = 1; i <= m; i++)
+	{
+		int op;
+		cin >> op;
+		if (op == 1)
+		{
+			cin >> x >> y >> z;
+			mchain(x, y, z);
+		}
+		else if (op == 2)
+		{
+			cin >> x >> y;
+			cout << qchain(x, y) << endl;
+		}
+		else if (op == 3)
+		{
+			cin >> x >> z;
+			mson(x, z);
+		}
+		else
+		{
+			cin >> x;
+			cout << qson(x) << endl;
+		}
+	}
+	// for(int i=1;i<=n;i++) cout<<a[i]<<endl;
+	system("pause");
+	return 0;
+}
 ```
 
 ### 序列分块
 
 ### 莫队
 
-### 倍增思想（LCA、ST表）
+### 倍增思想（ST表）
 
 ```c++
 // ST表
@@ -212,6 +803,79 @@ int main()
     cin >> n;
     for (int i = 1; i <= n;i++)
         cin >> ST[0][i];
+}
+```
+
+### 倍增思想（LCA）
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 500050;
+typedef long long ll;
+int fa[maxn][40], d[maxn], head[maxn];
+int lg[maxn];
+int n, m, s;
+int cnt;
+struct node
+{
+ int nex, t;
+} e[maxn*2];
+
+void add(int x, int y)
+{
+ e[++cnt].nex = head[x];
+ e[cnt].t = y;
+ head[x] = cnt;
+}
+
+void dfs(int f, int fath) // f表示当前节点，fath表示它的父亲节点
+{
+ d[f] = d[fath] + 1;
+ fa[f][0] = fath;
+ for (int i = 1; (1 << i) <= d[f]; i++)
+  fa[f][i] = fa[fa[f][i - 1]][i - 1]; //这个转移可以说是算法的核心之一
+           //意思是f的2^i祖先等于f的2^(i-1)祖先的2^(i-1)祖先
+           // 2^i=2^(i-1)+2^(i-1)
+ for (int i = head[f]; i; i = e[i].nex)
+  if (e[i].t != fath)
+   dfs(e[i].t, f);
+}
+
+int lca(int x, int y)
+{
+ if (d[x] < d[y]) //用数学语言来说就是：不妨设x的深度 >= y的深度
+  swap(x, y);
+ while (d[x] > d[y])
+  x = fa[x][lg[d[x] - d[y]] - 1]; //先跳到同一深度
+ if (x == y)         //如果x是y的祖先，那他们的LCA肯定就是x了
+  return x;
+ for (int k = lg[d[x]] - 1; k >= 0; k--) //不断向上跳（lg就是之前说的常数优化）
+  if (fa[x][k] != fa[y][k])    //因为我们要跳到它们LCA的下面一层，所以它们肯定不相等，如果不相等就跳过去。
+   x = fa[x][k], y = fa[y][k];
+ return fa[x][0]; //返回父节点
+}
+
+int main()
+{
+ cin >> n >> m >> s;
+ for (int i = 1; i <= n - 1; i++)
+ {
+  int x, y;
+  cin >> x >> y;
+  add(x, y);
+  add(y, x);
+ }
+ for (int i = 1; i <= n; i++)       //预先算出log_2(i)+1的值，用的时候直接调用就可以了
+  lg[i] = lg[i - 1] + (1 << lg[i - 1] == i); //看不懂的可以手推一下
+ dfs(s, s);
+ for (int i = 1; i <= m; i++)
+ {
+  int x, y;
+  cin >> x >> y;
+  cout << lca(x, y) << endl;
+ }
+ system("pause");
 }
 ```
 
@@ -256,22 +920,22 @@ void dijkstra(int n)
   	typedef pair<int, int> pii;
     priority_queue<pii,vector<pii>,greater<pii> >q;
     memset(dis,0x3f,sizeof dis);
-    q.push({0,1});
-    dis[1]=0;
+    q.push(make_pair(0,t));
+    dis[t]=0;
     while(!q.empty())
     {
-        pair<int,int> temp = q.top();//记录堆顶，即堆内最小的边并将其弹出 
+        pii temp = q.top();//记录堆顶，即堆内最小的边并将其弹出 
         q.pop();
         int u = temp.second;//点 
         if(vis[u]) continue;//如果被访问过，就跳过 
         vis[u]=true;//标记 
-        for(int i = head[u];i!=-1;i=edge[i].next)//搜索堆顶的所有连边 
+        for(int i = head[u];i!=-1;i=edge[i].nxt)//搜索堆顶的所有连边 
         {
-            int v = edge[i].v;
-            if(dis[v]>dis[u]+edge[i].w)//松弛操作 
+            int v = edge[i].to;
+            if(dis[v]>dis[u]+edge[i].val)//松弛操作 
             {
-                dis[v]=dis[u]+edge[i].w;
-                q.push({dis[v],v});//把新遍历的点加到堆中 
+                dis[v]=dis[u]+edge[i].val;
+                q.push(make_pair(dis[v],v));//把新遍历的点加到堆中 
             }
         }
     }
@@ -282,37 +946,29 @@ void dijkstra(int n)
 #### SPFA
 
 ```c++
-void spfa()
+inline bool spfa(int S, int V)
 {
-    for(int i=1;i<=n;i++)
-    dist[i]=INT_MAX;//题目要求初始化为2^31-1即int整型的最大范围
-
-    dist[s]=0;
-    queue<int>q;
-    q.push(s);
-    st[s]=true;
-
-    int t;
-    while (!q.empty())
-    {
-        t=q.front();
-        q.pop();
-        st[t]=false;
-
-        for(int i=h[t];i!=-1;i=ne[i])
-        {
-            int j=e[i];
-            if(dist[j]>dist[t]+w[i])
-            {
-                dist[j]=dist[t]+w[i];
-                if(!st[j])
-                {
-                    q.push(j);
-                    st[j]=true;
-                }
-            }
-        }
-    }    
+	for (int i = 1; i <= V; ++i) {
+		dis[i] = inf;
+		cnt[i] = 0;
+		vis[i] = 0;
+	}
+	vis[S] = 1; dis[S] = 0;
+	q.push(S);
+	while (!q.empty()) {
+		int u = q.front(); q.pop(); vis[u] = 0;
+		for (int i = head[u]; ~i; i = edge[i].nxt) {
+			int to = edge[i].to;
+			if (dis[to] > dis[u] + edge[i].val) {
+				dis[to] = dis[u] + edge[i].val;
+				if (!vis[to]) {
+					if (++cnt[to] >= V)return true;
+					vis[to] = 1; q.push(to);
+				}
+			}
+		}
+	}
+	return false;
 }
 ```
 
@@ -372,10 +1028,180 @@ int Kruskal()
 }
 ```
 
-#### 树剖
+### Tarjan
+
+#### 割点
 
 ```c++
+// luogu P3388 【模板】割点（割顶）
 
+#include <bits/stdc++.h>
+using namespace std;
+const int inf = 0x3f3f3f3f;
+const int maxn = 2e4+10;
+int n, m, t, root;
+int ans = 0;
+
+int head[maxn], ct;
+struct Edge {
+	int val, to, nxt;
+}edge[maxn*10];
+
+inline void addedge(int s, int t) {
+	edge[++ct].to = t;
+	edge[ct].nxt = head[s];
+	head[s] = ct;
+}
+
+inline void init() {
+	memset(head, -1, sizeof head);
+	ct = 0;
+}
+
+int dfn[maxn], low[maxn], dfncnt, st[maxn], in_stack[maxn], tp;
+int scc[maxn], sc;  // 结点 i 所在 SCC 的编号
+int sz[maxn],ind[maxn],od[maxn];       // 强连通 i 的大小
+int is_cut[maxn];
+
+void tarjan(int u) {
+	low[u] = dfn[u] = ++dfncnt;
+	int cnt = 0;
+	for (int i = head[u]; ~i; i = edge[i].nxt) {
+    	int v = edge[i].to;
+		if (!dfn[v]) {
+			tarjan(v);
+			low[u] = min(low[u], low[v]);
+			if (low[v] >= dfn[u]) {
+				cnt++;
+				if (u != root || cnt > 1) {
+					is_cut[u] = 1;
+				}
+			}
+		}
+		else low[u] = min(low[u], dfn[v]);
+  	}
+}
+
+inline void solve() {
+	cin >> n >> m;
+	for (int i = 1; i <= m; ++i) {
+		int s, t;
+		cin >> s >> t;
+		if (s == t)continue;
+		addedge(s, t);
+		addedge(t, s);
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (dfn[i] == 0) {
+			root = i;
+			tarjan(i);
+		}
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (is_cut[i])ans++;
+	}
+	cout << ans << endl;
+	for (int i = 1; i <= n; ++i) {
+		if (is_cut[i])cout << i << " ";
+	}
+	return;
+}
+
+int main() {
+	ios::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+	int T;
+	T = 1;
+	while (T--) {
+		init();
+		solve();
+	}
+	return 0;
+}
+```
+
+#### 缩点
+
+```c++
+int dfn[maxn], low[maxn], dfncnt, st[maxn], in_stack[maxn], tp;
+int scc[maxn], sc;  // 结点 i 所在 SCC 的编号
+int sz[maxn];       // 强连通 i 的大小
+
+
+void tarjan(int u) {
+  	low[u] = dfn[u] = ++dfncnt, st[++tp] = u, in_stack[u] = 1;
+  	for (int i = head[u]; ~i; i = edge[i].nxt) {
+    	int v = edge[i].to;
+    	if (!dfn[v]) {
+      		tarjan(v);
+      		low[u] = min(low[u], low[v]);
+    	} else if (in_stack[v]) {
+      		low[u] = min(low[u], dfn[v]);
+    	}
+  	}
+  	if (dfn[u] == low[u]) {
+    	++sc;
+    	while (st[tp] != u) {
+      		scc[st[tp]] = sc;
+      		sz[sc]++;
+      		in_stack[st[tp]] = 0;
+      		--tp;
+    	}
+    	scc[st[tp]] = sc;
+    	sz[sc]++;
+    	in_stack[st[tp]] = 0;
+    	--tp;
+  	}
+}
+```
+
+### 网络流
+
+#### Dinic
+
+```c++
+// 注意建图操作cnt从1开始！！！建图的同时建边权为零的反图
+int dep[maxn],no[maxn];// 弧优化
+
+inline bool bfs(){
+	for(int i=1;i<=n;++i)dep[i]=INF;
+	dep[s]=0;
+	queue<int> q;
+	q.push(s);
+	no[s]=head[s];
+	while(!q.empty()){
+		int now=q.front();
+		q.pop();
+		for(int i=head[now];~i;i=edge[i].nxt){
+			int to=edge[i].to;
+			if(edge[i].val>0&&dep[to]==INF){
+				q.push(to);
+				no[to]=head[to];
+				dep[to]=dep[now]+1;
+				if(to==t)return true;
+			}
+		}
+	}
+	return false;
+}
+
+inline int dinic(int x,ll flow){
+	if(x==t)return flow;
+	ll tmp,sum=0;
+	for(int i=no[x];(~i)&&flow;i=edge[i].nxt){
+		no[x]=i;
+		int to=edge[i].to;
+		if(edge[i].val>0&&(dep[to]==dep[x]+1)){
+			tmp=dinic(to,min(flow,edge[i].val));
+			if(tmp==0)dep[to]=INF; //剪枝
+			flow-=tmp;
+			sum+=tmp;
+			edge[i].val-=tmp;
+			edge[i^1].val+=tmp;
+		}
+	}
+	// if(sum==0)return dep[x]=0;
+	return sum;
+}
 ```
 
 ## 数论
