@@ -1,4 +1,4 @@
-# ACM-ICPC常用模板整理
+# ACM常用模板整理
 
 <p align="right"> by 石珂安 夏鹏 王子悦 </p>
 
@@ -962,13 +962,13 @@ inline bool spfa(int S, int V)
 			if (dis[to] > dis[u] + edge[i].val) {
 				dis[to] = dis[u] + edge[i].val;
 				if (!vis[to]) {
-					if (++cnt[to] >= V)return true;
+					if (++cnt[to] >= V)return false;
 					vis[to] = 1; q.push(to);
 				}
 			}
 		}
 	}
-	return false;
+	return true;
 }
 ```
 
@@ -1236,25 +1236,31 @@ int lmp(int a,int b){
 ### 欧拉筛
 
 ```c++
-#define n 10000
+bool isprime[MAXN]; // isprime[i]表示i是不是素数
+int prime[MAXN]; // 现在已经筛出的素数列表
+int n; // 上限，即筛出<=n的素数
+int cnt; // 已经筛出的素数个数
 
-bool vis[n];//标记
-int prim[n];//储存素数
-int num=0;//素数数量
-
-void getprim()
+void euler()
 {
-    memset(vis,true,sizeof(vis));//初始化为全体素数
-    vis[0]=vis[1]=false;//01不是素数
-    for(int i=2;i<=n;i++){
-        if(vis[i]) prim[++num]=i;
-        for(int j=1;j<=num&&i*prim[j]<=n;j++){//合数在给定范围内
-            vis[i*prim[j]]=false;
-            if(i%prim[j]==0) break;
+    memset(isprime, true, sizeof(isprime)); // 先全部标记为素数
+    isprime[1] = false; // 1不是素数
+    for(int i = 2; i <= n; ++i) // i从2循环到n（外层循环）
+    {
+        if(isprime[i]) prime[++cnt] = i;
+        // 如果i没有被前面的数筛掉，则i是素数
+        for(int j = 1; j <= cnt && i * prime[j] <= n; ++j)
+        // 筛掉i的素数倍，即i的prime[j]倍
+        // j循环枚举现在已经筛出的素数（内层循环）
+        {
+            isprime[i * prime[j]] = false;
+            // 倍数标记为合数，也就是i用prime[j]把i * prime[j]筛掉了
+            if(i % prime[j] == 0) break;
+            // 最神奇的一句话，如果i整除prime[j]，退出循环
+            // 这样可以保证线性的时间复杂度
         }
     }
 }
-
 ```
 
 ## 字符串
