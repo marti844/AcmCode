@@ -1,5 +1,9 @@
 # ACM常用模板整理
 
+[toc]
+
+<div STYLE="page-break-after: always;"></div>
+
 ## 读入输出
 
 ```c++
@@ -1316,6 +1320,24 @@ void euler()
             // 这样可以保证线性的时间复杂度
         }
     }
+}
+```
+
+### 线性同余方程
+
+```c++
+long long exgcd(long long a, long long b, long long &x, long long &y)
+{
+    if (!b)
+    {
+        x = 1, y = 0;
+        return a;
+    }
+    long long  d = exgcd(b, a % b, x, y);
+    long long  z = x;
+    x = y;
+    y = z - a / b * y;
+    return d;
 }
 ```
 
