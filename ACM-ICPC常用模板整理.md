@@ -1,7 +1,5 @@
 # ACM常用模板整理
 
-<p align="right"> by 石珂安 夏鹏 王子悦 </p>
-
 ## 读入输出
 
 ```c++
@@ -29,6 +27,64 @@ inline void print(int x)
 ```
 
 ## DP
+
+### 背包DP
+
+```c++
+// luogu P1757 
+// 分组背包
+
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+
+const int N = 1e3 + 10;
+const int M = 1e6 + 10;
+
+int dp[N];
+int n, m;
+int wo, vo, co;
+vector<int> w[N], v[N];
+int cnt = 0;
+bool vis[N];
+
+inline void solve() {
+    scanf("%lld%lld", &m, &n);
+    for(int i = 1; i <= n; ++i) {
+        scanf("%lld%lld%lld", &wo, &vo, &co);
+        if(!vis[co]) {
+            cnt ++;
+            vis[co] = 1;
+        }
+        w[co].push_back(wo);
+        v[co].push_back(vo);
+    }
+    for(int i = 1; i <= cnt; ++i) {
+        for(int j = m; j >= 1; --j) {
+            for(int k = 0; k < w[i].size(); ++k) {
+                if(j >= w[i][k]) {
+                    dp[j] = max(dp[j], dp[j - w[i][k]] + v[i][k]);
+                }
+            }
+        }
+    }
+    printf("%d\n", dp[m]);
+}
+
+signed main() {
+    // ios::sync_with_stdio(0);
+    // cin.tie(0), cout.tie(0);
+
+    int T;
+    T = 1;
+    while(T--) {
+        solve();
+    }
+    return 0;
+}
+```
+
+
 
 ### 最长公共子序列(LCS)
 
