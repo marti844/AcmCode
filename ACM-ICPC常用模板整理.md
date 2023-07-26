@@ -1483,5 +1483,52 @@ struct trie {
 
 ### 后缀自动机
 
+## 其他
+
+### 离散化
+
+```c++
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+ 
+int n;	//原序列长度
+int a[1005];//原序列
+int len;	//去重后的序列长度
+int f[1005];//原序列的副本
+ 
+int main()
+{
+	scanf("%d",&n);
+	for(int i=0;i<n;i++)
+	{
+		scanf("%d",&a[i]);
+		f[i]=a[i];
+	}
+	sort(f,f+n);//排序
+	for(int i=0;i<n;i++)
+		printf("%-4d ",a[i]);
+	printf("\n");
+	len=unique(f,f+n)-f;//去重后的序列长度
+	for(int i=0;i<n;i++)	//离散化
+		a[i]=lower_bound(f,f+len,a[i])-f;
+	for(int i=0;i<n;i++)//用lower_bound 离散化后的结果
+		printf("%-4d ",a[i]);
+	printf("\n");
+	for(int i=0;i<n;i++)
+		f[i]=a[i];
+	sort(f,f+n);
+	len=unique(f,f+n)-f;
+	for(int i=0;i<n;i++)	//离散化
+		a[i]=upper_bound(f,f+len,a[i])-f;
+	for(int i=0;i<n;i++)//用upper_bound 离散化后的结果
+		printf("%-4d ",a[i]);
+	printf("\n");
+	return 0;
+}
+```
+
 
 

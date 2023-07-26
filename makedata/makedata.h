@@ -15,7 +15,13 @@ void file(int tp){
 	outfile.open(outname);
 }
 
-#define num(a,b) ((rand()*RAND_MAX+rand())%(a-b+1)+a)
+int num(int a, int b, int n) {
+	int ans = (rand() * RAND_MAX + rand()) % (b - a + 1) + a;
+	while(ans == n) {
+		ans = (rand() * RAND_MAX + rand()) % (b - a + 1) + a;
+	}
+	return ans;
+}
 
 void make(int tp);
 
