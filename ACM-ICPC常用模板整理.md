@@ -6,6 +6,8 @@
 
 ## 读入输出
 
+### 快读
+
 ```c++
 inline int read(){
     int x=0,f=1;char ch=getchar();
@@ -28,6 +30,254 @@ inline void print(int x)
 	print(x/10);
 	putchar(x%10+'0');
 }
+```
+
+### 巨快读
+
+```c++
+namespace IO
+{
+#define BUF_SIZE 100000
+#define OUT_SIZE 100000
+#define ll long long
+    // fread->read
+
+    bool IOerror = 0;
+    inline char nc()
+    {
+        static char buf[BUF_SIZE], *p1 = buf + BUF_SIZE, *pend = buf + BUF_SIZE;
+        if (p1 == pend)
+        {
+            p1 = buf;
+            pend = buf + fread(buf, 1, BUF_SIZE, stdin);
+            if (pend == p1)
+            {
+                IOerror = 1;
+                return -1;
+            }
+            //{printf("IO error!\n");system("pause");for (;;);exit(0);}
+        }
+        return *p1++;
+    }
+    inline bool blank(char ch) { return ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t'; }
+    inline void read(int &x)
+    {
+        bool sign = 0;
+        char ch = nc();
+        x = 0;
+        for (; blank(ch); ch = nc())
+            ;
+        if (IOerror)
+            return;
+        if (ch == '-')
+            sign = 1, ch = nc();
+        for (; ch >= '0' && ch <= '9'; ch = nc())
+            x = x * 10 + ch - '0';
+        if (sign)
+            x = -x;
+    }
+    inline void read(ll &x)
+    {
+        bool sign = 0;
+        char ch = nc();
+        x = 0;
+        for (; blank(ch); ch = nc())
+            ;
+        if (IOerror)
+            return;
+        if (ch == '-')
+            sign = 1, ch = nc();
+        for (; ch >= '0' && ch <= '9'; ch = nc())
+            x = x * 10 + ch - '0';
+        if (sign)
+            x = -x;
+    }
+    inline void read(double &x)
+    {
+        bool sign = 0;
+        char ch = nc();
+        x = 0;
+        for (; blank(ch); ch = nc())
+            ;
+        if (IOerror)
+            return;
+        if (ch == '-')
+            sign = 1, ch = nc();
+        for (; ch >= '0' && ch <= '9'; ch = nc())
+            x = x * 10 + ch - '0';
+        if (ch == '.')
+        {
+            double tmp = 1;
+            ch = nc();
+            for (; ch >= '0' && ch <= '9'; ch = nc())
+                tmp /= 10.0, x += tmp * (ch - '0');
+        }
+        if (sign)
+            x = -x;
+    }
+    inline void read(char *s)
+    {
+        char ch = nc();
+        for (; blank(ch); ch = nc())
+            ;
+        if (IOerror)
+            return;
+        for (; !blank(ch) && !IOerror; ch = nc())
+            *s++ = ch;
+        *s = 0;
+    }
+    inline void read(char &c)
+    {
+        for (c = nc(); blank(c); c = nc())
+            ;
+        if (IOerror)
+        {
+            c = -1;
+            return;
+        }
+    }
+    // fwrite->write
+    struct Ostream_fwrite
+    {
+        char *buf, *p1, *pend;
+        Ostream_fwrite()
+        {
+            buf = new char[BUF_SIZE];
+            p1 = buf;
+            pend = buf + BUF_SIZE;
+        }
+        void out(char ch)
+        {
+            if (p1 == pend)
+            {
+                fwrite(buf, 1, BUF_SIZE, stdout);
+                p1 = buf;
+            }
+            *p1++ = ch;
+        }
+        void print(int x)
+        {
+            static char s[15], *s1;
+            s1 = s;
+            if (!x)
+                *s1++ = '0';
+            if (x < 0)
+                out('-'), x = -x;
+            while (x)
+                *s1++ = x % 10 + '0', x /= 10;
+            while (s1-- != s)
+                out(*s1);
+        }
+        void println(int x)
+        {
+            static char s[15], *s1;
+            s1 = s;
+            if (!x)
+                *s1++ = '0';
+            if (x < 0)
+                out('-'), x = -x;
+            while (x)
+                *s1++ = x % 10 + '0', x /= 10;
+            while (s1-- != s)
+                out(*s1);
+            out('\n');
+        }
+        void print(ll x)
+        {
+            static char s[25], *s1;
+            s1 = s;
+            if (!x)
+                *s1++ = '0';
+            if (x < 0)
+                out('-'), x = -x;
+            while (x)
+                *s1++ = x % 10 + '0', x /= 10;
+            while (s1-- != s)
+                out(*s1);
+        }
+        void println(ll x)
+        {
+            static char s[25], *s1;
+            s1 = s;
+            if (!x)
+                *s1++ = '0';
+            if (x < 0)
+                out('-'), x = -x;
+            while (x)
+                *s1++ = x % 10 + '0', x /= 10;
+            while (s1-- != s)
+                out(*s1);
+            out('\n');
+        }
+        void print(double x, int y)
+        {
+            static ll mul[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000,
+                               1000000000, 10000000000LL, 100000000000LL, 1000000000000LL, 10000000000000LL,
+                               100000000000000LL, 1000000000000000LL, 10000000000000000LL, 100000000000000000LL};
+            if (x < -1e-12)
+                out('-'), x = -x;
+            x *= mul[y];
+            ll x1 = (ll)floor(x);
+            if (x - floor(x) >= 0.5)
+                ++x1;
+            ll x2 = x1 / mul[y], x3 = x1 - x2 * mul[y];
+            print(x2);
+            if (y > 0)
+            {
+                out('.');
+                for (size_t i = 1; i < y && x3 * mul[i] < mul[y]; out('0'), ++i)
+                    ;
+                print(x3);
+            }
+        }
+        void println(double x, int y)
+        {
+            print(x, y);
+            out('\n');
+        }
+        void print(char *s)
+        {
+            while (*s)
+                out(*s++);
+        }
+        void println(char *s)
+        {
+            while (*s)
+                out(*s++);
+            out('\n');
+        }
+        void flush()
+        {
+            if (p1 != buf)
+            {
+                fwrite(buf, 1, p1 - buf, stdout);
+                p1 = buf;
+            }
+        }
+        ~Ostream_fwrite() { flush(); }
+    } Ostream;
+    inline void print(int x) { Ostream.print(x); }
+    inline void println(int x) { Ostream.println(x); }
+    inline void print(char x) { Ostream.out(x); }
+    inline void println(char x)
+    {
+        Ostream.out(x);
+        Ostream.out('\n');
+    }
+    inline void print(ll x) { Ostream.print(x); }
+    inline void println(ll x) { Ostream.println(x); }
+    inline void print(double x, int y) { Ostream.print(x, y); }
+    inline void println(double x, int y) { Ostream.println(x, y); }
+    inline void print(char *s) { Ostream.print(s); }
+    inline void println(char *s) { Ostream.println(s); }
+    inline void println() { Ostream.out('\n'); }
+    inline void flush() { Ostream.flush(); }
+#undef ll
+#undef OUT_SIZE
+#undef BUF_SIZE
+};
+
+using namespace IO;
 ```
 
 ## DP
@@ -841,28 +1091,50 @@ signed main()
 ### 倍增思想（ST表）
 
 ```c++
-// ST表
-const int maxn = 100000;
-int ST[maxn][22];
-int n;
-void build()
+#include<bits/stdc++.h>
+#define int long long 
+using namespace std;
+const int N = 1e5 + 10;
+const int mod = 1e9 + 7;
+int n, m, k;
+int lg[N], st[N][30];
+
+inline int read()
 {
-    for (int j = 1; j <= 21;j++)
-    {
-        for (int i = 1; i + (1 << j) - 1 <= n;i++)
-            ST[i][j] = max(ST[i][j - 1], ST[i + (1 << (j - 1))][j - 1]);
+    int x=0,f=1;char ch=getchar();
+    while (ch<'0'||ch>'9'){if (ch=='-') f=-1;ch=getchar();}
+    while (ch>='0'&&ch<='9'){x=x*10+ch-48;ch=getchar();}
+    return x*f;
+}
+
+inline void print(int x)
+{
+    if(x==0)return;
+    print(x/10);
+    putchar(x%10+'0');
+}
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    n = read(), m = read();
+    for(int i = 1; i <= n; ++i) {
+        st[i][0] = read();
+        if(i >= 2) lg[i] = lg[i >> 1] + 1;
     }
-}
-int query(int l,int r)
-{
-    int s = (int)log2(r - l + 1);
-    return max(ST[l][s], ST[r - (1 << l) + 1][s]);
-}
-int main()
-{
-    cin >> n;
-    for (int i = 1; i <= n;i++)
-        cin >> ST[0][i];
+    for(int j = 1; j <= lg[n] + 1; ++j) {
+        for(int i = 1; i + (1 << j) - 1 <= n; ++i) {
+            st[i][j] = max(st[i][j - 1], st[i + (1 << (j - 1))][j - 1]);
+        }
+    }
+    while(m --) {
+        int l, r;
+        l = read(), r = read();
+        int mid = lg[r - l + 1];
+        print(max(st[l][mid], st[r - (1 << mid) + 1][mid]));
+        printf("\n");
+        // std::cout << max(st[l][mid], st[r - (1 << mid) + 1][mid]) << endl;
+    }
+    return 0;
 }
 ```
 
@@ -1270,8 +1542,8 @@ inline int dinic(int x,ll flow){
 
 ```c++
 // C++ Version
-long long ksm(long long a, long long b, int c) {
-  long long res = 1;
+int ksm(int a, int b, int c) {
+  int res = 1;
   a%=c;
   while (b > 0) {
     if (b & 1) res = res * a % c;
@@ -1338,6 +1610,180 @@ long long exgcd(long long a, long long b, long long &x, long long &y)
     x = y;
     y = z - a / b * y;
     return d;
+}
+```
+
+### 高精度
+
+```c++
+#include <cstdio>
+#include <cstring>
+
+static const int LEN = 1004;
+
+int a[LEN], b[LEN], c[LEN], d[LEN];
+
+void clear(int a[])
+{
+    for (int i = 0; i < LEN; ++i)
+        a[i] = 0;
+}
+
+void read(int a[])
+{
+    static char s[LEN + 1];
+    scanf("%s", s);
+
+    clear(a);
+
+    int len = strlen(s);
+    for (int i = 0; i < len; ++i)
+        a[len - i - 1] = s[i] - '0';
+}
+
+void print(int a[])
+{
+    int i;
+    for (i = LEN - 1; i >= 1; --i)
+        if (a[i] != 0)
+            break;
+    for (; i >= 0; --i)
+        putchar(a[i] + '0');
+    putchar('\n');
+}
+
+void add(int a[], int b[], int c[])
+{
+    clear(c);
+
+    for (int i = 0; i < LEN - 1; ++i)
+    {
+        c[i] += a[i] + b[i];
+        if (c[i] >= 10)
+        {
+            c[i + 1] += 1;
+            c[i] -= 10;
+        }
+    }
+}
+
+void sub(int a[], int b[], int c[])
+{
+    clear(c);
+
+    for (int i = 0; i < LEN - 1; ++i)
+    {
+        c[i] += a[i] - b[i];
+        if (c[i] < 0)
+        {
+            c[i + 1] -= 1;
+            c[i] += 10;
+        }
+    }
+}
+
+void mul(int a[], int b[], int c[])
+{
+    clear(c);
+
+    for (int i = 0; i < LEN - 1; ++i)
+    {
+        for (int j = 0; j <= i; ++j)
+            c[i] += a[j] * b[i - j];
+
+        if (c[i] >= 10)
+        {
+            c[i + 1] += c[i] / 10;
+            c[i] %= 10;
+        }
+    }
+}
+
+bool greater_eq(int a[], int b[], int last_dg, int len)
+{
+    if (a[last_dg + len] != 0)
+        return true;
+    for (int i = len - 1; i >= 0; --i)
+    {
+        if (a[last_dg + i] > b[i])
+            return true;
+        if (a[last_dg + i] < b[i])
+            return false;
+    }
+    return true;
+}
+
+void div(int a[], int b[], int c[], int d[])
+{
+    clear(c);
+    clear(d);
+
+    int la, lb;
+    for (la = LEN - 1; la > 0; --la)
+        if (a[la - 1] != 0)
+            break;
+    for (lb = LEN - 1; lb > 0; --lb)
+        if (b[lb - 1] != 0)
+            break;
+    if (lb == 0)
+    {
+        puts("> <");
+        return;
+    }
+
+    for (int i = 0; i < la; ++i)
+        d[i] = a[i];
+    for (int i = la - lb; i >= 0; --i)
+    {
+        while (greater_eq(d, b, i, lb))
+        {
+            for (int j = 0; j < lb; ++j)
+            {
+                d[i + j] -= b[j];
+                if (d[i + j] < 0)
+                {
+                    d[i + j + 1] -= 1;
+                    d[i + j] += 10;
+                }
+            }
+            c[i] += 1;
+        }
+    }
+}
+
+int main()
+{
+    read(a);
+
+    char op[4];
+    scanf("%s", op);
+
+    read(b);
+
+    switch (op[0])
+    {
+        case '+':
+            add(a, b, c);
+            print(c);
+            break;
+        case '-':
+            sub(a, b, c);
+            print(c);
+            break;
+        case '*':
+            mul(a, b, c);
+            print(c);
+            break;
+        case '/':
+            div(a, b, c, d);
+            print(c);
+            print(d);
+            break;
+        default:
+            puts("> <");
+    }
+
+    return 0;
 }
 ```
 
