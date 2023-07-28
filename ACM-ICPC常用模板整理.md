@@ -4,6 +4,16 @@
 
 <div STYLE="page-break-after: always;"></div>
 
+## 宏定义
+
+```c++
+#include<bits/stdc++.h>
+#define int long long
+#define cin std::cin
+#define cout std::cout
+#define fastio ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+```
+
 ## 读入输出
 
 ### 快读
@@ -631,6 +641,15 @@ int* sort_array(int *arr, int n) {
 ```
 
 ## 数据结构
+
+### 并查集（路经压缩）
+
+```c++
+int fa[N];
+inline void init() { for(int i = 1; i <= n; ++i) fa[i] = i; }
+int find(int x) { return fa[x] == x ? x : fa[x] = find(fa[x]); }
+void merge(int x, int y) { fa[find(x)] = find(y); }
+```
 
 ### 树状数组
 
