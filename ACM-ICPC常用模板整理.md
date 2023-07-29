@@ -42,7 +42,7 @@ inline void print(int x)
 }
 ```
 
-### 巨快读
+### 超级快读
 
 ```c++
 namespace IO
@@ -1897,18 +1897,46 @@ const int MAXN=1000100;
 ### Manacher
 
 ```c++
-vector<int> d1(n), d2(n);
-for (int i = 0; i < n; i++) {
-  d1[i] = 1;
-  while (0 <= i - d1[i] && i + d1[i] < n && s[i - d1[i]] == s[i + d1[i]]) {
-    d1[i]++;
-  }
-
-  d2[i] = 0;
-  while (0 <= i - d2[i] - 1 && i + d2[i] < n &&
-         s[i - d2[i] - 1] == s[i + d2[i]]) {
-    d2[i]++;
-  }
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn=11000010;
+char ss[maxn];
+char ns[maxn<<2];
+int  d[maxn<<2];
+int l,r;
+int res=-1;
+void manacher()
+{
+    ns[0]='@';
+    ns[1]='#';
+    int k=1;
+    int len=strlen(ss);
+    for(int i=0;i<len;i++)
+    {
+        ns[++k]=ss[i];
+        ns[++k]='#';
+    };
+    len=k;
+    d[1]=1;
+    for(int i=1,l=r=1;i<=len;i++)
+    {
+        if(i<r) d[i]=min(d[r-i+l],r-i+1);
+        while(ns[i-d[i]]==ns[i+d[i]]) d[i]++;
+        if(i+d[i]>r)
+        {
+            l=i-d[i]+1;
+            r=i+d[i]-1;
+        }
+        res=max(d[i],res);
+    }
+    return ;
+}
+int main()
+{
+    scanf("%s",ss);
+    manacher();
+    printf("%d\n",res-1);
+    return 0;
 }
 ```
 
