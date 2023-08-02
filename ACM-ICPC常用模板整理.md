@@ -11,7 +11,7 @@
 #define int long long
 #define cin std::cin
 #define cout std::cout
-#define fastio ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+#define fastio ios::sync_with_stdio(0), cin.tie(nullptr)
 using namespace std;
 const int N = 1e5 + 10;
 const int mod = 998244353;
@@ -80,6 +80,92 @@ inline int read(){
         ch = getc();
     }
     return f?-ret:ret;
+}
+```
+
+## 基础
+
+### 位运算
+
+```c++
+// 获取 a 的第 b 位，最低位编号为 0
+int getBit(int a, int b) { return (a >> b) & 1; }
+
+// 将 a 的第 b 位设置为 0 ，最低位编号为 0
+int unsetBit(int a, int b) { return a & ~(1 << b); }
+
+// 将 a 的第 b 位设置为 1 ，最低位编号为 0
+int setBit(int a, int b) { return a | (1 << b); }
+
+// 将 a 的第 b 位取反 ，最低位编号为 0
+int flapBit(int a, int b) { return a ^ (1 << b); }
+
+// 求汉明权重，即它的 1 的个数
+// 求 x 的汉明权重
+int popcount1(int x) {
+    int cnt = 0;
+    while (x) {
+        cnt += x & 1;
+        x >>= 1;
+    }
+    return cnt;
+}
+
+// 求 x 的汉明权重
+// 将这个数不断减去它的lowbit，直到这个数变为 0
+int popcount2(int x) {
+    int cnt = 0;
+    while (x) {
+        cnt++;
+        x -= x & -x;
+    }
+    return cnt;
+}
+
+// 得到与数 x 汉明权重相等的后继; 注：0 需要特判， 0 无相同汉明权重的后继
+void hj(int x){
+    int t = x + (x & -x);
+    x = t | ((((t&-t)/(x&-x))>>1)-1);
+}
+// 枚举 0 ~ n 按汉明权重递增的排列的完整代码为：
+void hmqz1(int n){
+    for (int i = 0; (1<<i)-1 <= n; i++) {
+        for (int x = (1<<i)-1, t; x <= n; t = x+(x&-x), x = x ? (t|((((t&-t)/(x&-x))>>1)-1)) :(n+1)) {
+        // 写下需要完成的操作
+        }
+    }
+}
+
+// 内建函数，运行速度更快
+
+// 返回 x 的二进制末尾最后一个 1 的位置，位置的编号从 1 开始（最低位编号为 1 ）。当 x 为 0 时返回 0 。
+// int __builtin_ffs(int x);
+
+// 返回 x 的二进制的前导 0 的个数。当 x 为 0 时，结果未定义。
+// int __builtin_clz(unsigned int x);
+
+// 返回 x 的二进制末尾连续 0 的个数。当 x 为 0 时，结果未定义。
+// int __builtin_ctz(unsigned int x);
+
+// 当 x 的符号位为 0 时返回 x 的二进制的前导 0 的个数减一，否则返回 x 的二进制的前导 1 的个数减一
+// int __builtin_clrsb(int x);
+
+// 返回 x 的二进制中 1 的个数
+// int __builtin_popcount(unsigned int x);
+
+// 判断 x 的二进制中 1 的个数的奇偶性
+// int __builtin_parity(unsigned int x);
+
+// 求数 n 的以 2 为底的对数
+// 求一个数以2 为底的对数相当于这个数的二进制的位数 -1 （不考虑0）
+int ds(int n){
+    return 31 - __builtin_clz(n);
+}
+
+int main(){
+    int a = 31;
+    cout << ds(a) << endl;
+    return 0;
 }
 ```
 
@@ -1500,6 +1586,76 @@ void tarjan(int u) {
 }
 ```
 
+### 二分图最大匹配
+
+#### 匈牙利算法
+
++ 模板题：[luogu P3386 【模板】二分图最大匹配](https://www.luogu.com.cn/problem/P3386)
++ 时间复杂度：$O(n * e)$
+
+```c++
+#include<bits/stdc++.h>
+#define int long long
+#define cin std::cin
+#define cout std::cout
+#define fastio ios::sync_with_stdio(0), cin.tie(nullptr)
+using namespace std;
+const int N = 1e3 + 10;
+const int mod = 998244353;
+const int inf = 0x3fffffffffffffff;
+char buf[1<<21],*p1=buf,*p2=buf;
+inline char getc(){
+    return p1==p2&&(p2=(p1=buf)+fread(buf,1,1<<21,stdin),p1==p2)?EOF:*p1++;
+}
+inline int read(){
+    int ret = 0,f = 0;char ch = getc();
+    while (!isdigit (ch)){
+        if (ch == '-') f = 1;
+        ch = getc();
+    }
+    while (isdigit (ch)){
+        ret = ret * 10 + ch - 48;
+        ch = getc();
+    }
+    return f?-ret:ret;
+}
+int n, m, t;
+// mch存储右边到左边的匹配
+int mch[N], vistime[N]; 
+int mt[N];
+std::vector<int> G[N];
+inline bool dfs(int u, int tag) {
+    if(vistime[u] == tag) return false;
+    vistime[u] = tag;
+    for(auto v : G[u]) {
+        if(mch[v] == 0 || dfs(mch[v], tag)) {
+            mch[v] = u;
+            return true;
+        }
+    }
+    return false;
+}
+signed main() {
+    fastio;
+    cin >> n >> m >> t;
+    while(t--) {
+        int u, v;
+        cin >> u >> v;
+        G[u].push_back(v);
+    }
+    int ans = 0;
+    for(int i = 1; i <= n; ++i) {
+        if(dfs(i, i)) ans ++;
+    }
+    // 处理出左边到右边的匹配
+    for(int i = 1; i <= m; ++i) {
+        if(mch[i]) mt[mch[i]] = i;
+    }
+    cout << ans;
+    return 0;
+}
+```
+
 ### 网络流
 
 #### Dinic
@@ -1592,6 +1748,15 @@ int gcd(int a, int b){
 }
 int lmp(int a, int b){
    return a*b/gcd(a,b);
+}
+// 优化的更相减损术
+ll stein(ll a, ll b){
+    if(a < b) a ^= b, b ^= a, a ^= b;
+    if(b == 0) return a;
+    if((!(a & 1)) && (!(b & 1))) return stein(a >> 1, b >> 1) << 1;
+    else if((a & 1) && (!(b & 1))) return stein(a, b >> 1);
+    else if((!(a & 1)) && (b & 1)) return stein(a >> 1, b);
+    else return stein(a - b, b);
 }
 ```
 
@@ -1820,21 +1985,20 @@ int main()
 ### 字符串哈希
 
 ```c++
-const int M = 1e9 + 7;
-const int B = 233;
-
-typedef long long ll;
-
-int get_hash(const string& s) {
-  int res = 0;
-  for (int i = 0; i < s.size(); ++i) {
-    res = (ll)(res * B + s[i]) % M;
-  }
-  return res;
-}
-
-bool cmp(const string& s, const string& t) {
-  return get_hash(s) == get_hash(t);
+const unsigned long long Mod=212370440130137957ll;
+const int prime=233317;
+const int bas=131;
+unsigned  long long a[10010];
+char ss[10010];
+unsigned long long gethash()
+{
+    int len=strlen(ss+1);
+    unsigned long long tmp=0;
+        for(int i=1;i<=len;i++)
+        {
+            tmp=((tmp*bas%Mod+(unsigned long long)ss[i])%Mod+prime)%Mod;
+        }
+    return tmp;
 }
 ```
 
@@ -1984,6 +2148,36 @@ struct trie {
 ```
 
 ### 后缀自动机
+
+## 计算几何
+
+### 点到线段距离
+
+```c++
+struct Point {
+    // ll x, y;
+    db x, y;
+};
+db GetDistance(Point A, Point B) {
+    return sqrt((A.x-B.x) * (A.x-B.x) + (A.y-B.y) * (A.y-B.y));
+}
+// 求点 A 到线段 BC 的最短距离
+db GetNearest(Point A, Point B, Point C) {  // 注意 B、C 两点不能重合
+    db a = GetDistance(A, B);
+    db b = GetDistance(A, C);
+    db c = GetDistance(B, C);
+    if (a*a > b*b + c*c)
+        return b;
+    if (b*b > a*a + c*c)
+        return a;
+    // db l = (a+b+c) / 2;
+    // db s = sqrt(l*(l-a)*(l-b)*(l-c));   // 海伦公式，这里用到了两次 sqrt 函数，会丢失精度
+    // return 2*s/c;
+    // 利用向量来计算精度不会丢失太多
+    db s = 1.0 * fabs(((B.x - A.x) * (B.y - C.y) + (B.y - A.y) * (C.x - B.x)) / c);
+    return s;
+}
+```
 
 ## 其他
 
