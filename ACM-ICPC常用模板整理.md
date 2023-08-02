@@ -4,7 +4,7 @@
 
 <div STYLE="page-break-after: always;"></div>
 
-## 宏定义
+## 文件头
 
 ```c++
 #include<bits/stdc++.h>
@@ -12,6 +12,26 @@
 #define cin std::cin
 #define cout std::cout
 #define fastio ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+using namespace std;
+const int N = 1e5 + 10;
+const int mod = 998244353;
+const int inf = 0x3fffffffffffffff;
+char buf[1<<21],*p1=buf,*p2=buf;
+inline char getc(){
+    return p1==p2&&(p2=(p1=buf)+fread(buf,1,1<<21,stdin),p1==p2)?EOF:*p1++;
+}
+inline int read(){
+    int ret = 0,f = 0;char ch = getc();
+    while (!isdigit (ch)){
+        if (ch == '-') f = 1;
+        ch = getc();
+    }
+    while (isdigit (ch)){
+        ret = ret * 10 + ch - 48;
+        ch = getc();
+    }
+    return f?-ret:ret;
+}
 ```
 
 ## 读入输出
@@ -414,6 +434,208 @@ int* sort_array(int *arr, int n) {
 ```
 
 ## 数据结构
+
+### vector用法
+
+#### 1.初始化：
+
+```c++
+vector<类型>标识符
+vector<类型>标识符(最大容量)
+vector<类型>标识符(最大容量,初始所有值)
+ 
+int i[5]={1,2,3,4,5}
+vector<类型>vi(i,i+2);//得到i索引值为3以后的值
+ 
+vector<vector<int>>v; 二维向量//这里最外的<>要有空格。否则在比较旧的编译器下无法通过
+```
+
+#### 2.常用函数
+
+```c++
+push_back()  //在数组的最后添加一个数据
+ 
+pop_back() //去掉数组的最后一个数据
+
+at()  //得到编号位置的数据
+
+begin() //得到数组头的指针
+
+end() //得到数组的最后一个单元+1的指针
+  
+find()  //判断元素是否存在
+
+front() //得到数组头的引用
+
+back() //得到数组的最后一个单元的引用
+
+max_size() //得到vector最大可以是多大
+
+capacity() //当前vector分配的大小
+
+size() //当前使用数据的大小 or 返回a在内存中总共可以容纳的元素个数
+
+a.reserve(100); //改变当前vecotr所分配空间的大小将a的容量（capacity）扩充至100，也就是说现在测试a.capacity();的时候返回值是100
+
+a.resize(10); //将a的现有元素个数调至10个，多则删，少则补，增加的元素其值默认为0
+
+a.resize(10,2); //将a的现有元素个数调至10个，多则删，少则补，增加的元素其值为2
+
+erase() //删除指针指向的数据项
+
+clear() //清空当前的vector
+
+rbegin() //将vector反转后的开始指针返回(其实就是原来的end-1)
+
+rend() //将vector反转构的结束指针返回(其实就是原来的begin-1)
+
+empty() //判断vector是否为空
+
+swap() //与另一个vector交换数据
+a.swap(b); //b为向量，将a中的元素和b中的元素进行整体性交换
+
+reverse(obj.begin(),obj.end());反向迭代器,实现元素对调
+```
+
+#### 3.find用法
+
+```c++
+find(数组的头地址, 数组的尾地址, 要找的数)
+ 
+find(nums.begin(), nums.end(), target)
+
+//返回的是target第一次出现的地址
+//如果没有找到返回尾地址nums.end()
+```
+
+**实例**
+
+```c++
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+using std::vector;
+using std::cout;
+using std::endl;
+int main() {
+    vector<int> nums = {2,7,8,8,9};
+    int target = 8;
+    vector<int>::iterator loc = find(nums.begin(), nums.end(), target);
+
+    if (loc == nums.end()) {
+        cout << "数组中没有" << target << endl;
+    }
+    else {
+        cout << "数组中有" << target << endl;
+        cout << "并且, 它的第一次出现的位置为:" << loc - nums.begin() << endl;
+    }
+}
+```
+
+#### 4.访问
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    //顺序访问
+    vector<int>obj;
+    for(int i=0;i<10;i++)
+    {
+        obj.push_back(i);//存储数据
+    }
+    
+    //方法一数组访问
+    cout<<"直接利用数组：";
+    for(int i=0;i<10;i++)
+    {
+        cout<<obj[i]<<" ";
+    }
+    cout<<endl;
+    
+  
+    //方法二，使用迭代器将容器中数据输出
+    cout<<"利用迭代器：" ;
+    vector<int>::iterator it;
+    //声明一个迭代器，来访问vector容器，作用：遍历或者指向vector容器的元素
+    for(it=obj.begin();it!=obj.end();it++)
+    {
+        cout<<*it<<" ";
+    }
+  
+    return 0;
+}
+```
+
+#### 5.insert插入
+
+```c++
+insert()  //往vector任意位置插入一个元素，指定位置或者指定区间进行插入，
+ //第一个参数是个迭代器,第二个参数是元素。返回值是指向新元素的迭代器
+
+vector<int> vA;
+vector<int>::iterator it;
+
+//指定位置插入
+//iterator insert(const_iterator _Where, const _Ty& _Val)
+//第一个参数是个迭代器位置,第二个参数是元素
+it = vA.insert(vA.begin(),2); //往begin()之前插入一个int元素2 (vA={2,1}) 此时*it=2
+
+  
+//指定位置插入
+//void insert(const_iterator _Where, size_type _Count, const _Ty& _Val) 
+//第一个参数是个迭代器位置,第二个参数是要插入的元素个数，第三个参数是元素值
+it = vA.insert(vA.end(),2,3);//往end()之前插入2个int元素3 (vA={2,1,3,3}) 此时*it=3
+
+
+//指定区间插入
+//void insert(const_iterator _Where, _Iter _First, _Iter _Last) 
+vector<int> vB(3,6);  //vector<类型>标识符(最大容量,初始所有值)
+it = vA.insert(vA.end(),vB.begin(),vB.end()); //把vB中所有元素插入到vA的end()之前 (vA={2,1,3,3,6,6,6})
+//此时*it=6,指向最后一个元素值为6的元素位置
+
+
+
+//删除元素操作：
+ 
+pop_back()  从vector末尾删除一个元素
+
+erase()  从vector任意位置删除一个元素，指定位置或者指定区间进行删除，第一个参数都是个迭代器。返回值是指向删除后的下一个元素的迭代器
+
+clear()   清除vector中所有元素, size=0, 不会改变原有capacity
+```
+
+#### 6.排序
+
+```c++
+sort(v.begin(), v.end(),less<int>()); // 升序
+sort(v.begin(), v.end(),greater<int>()); // 降序
+```
+
+#### 7.删除元素
+
++ $erase()$ 函数：
+
+  $erase()$ 函数用于在顺序型容器中删除容器的一个元素，有两种函数原型，$c.erase (p ),c.erase(b,e);$  第一个删除迭代器 $p$ 所指向的元素，第二个删除迭代器 $b,e$ 所标记的范围内的元素，$c$ 为容器对象，返回值都是一个迭代器，该迭代器指向被删除元素后面的元素（这个是重点）
+
+```c++
+for(auto iter=vec.begin();iter!=vec.end(); ) {
+    if( *iter == 3) iter = veci.erase(iter);//当删除时erase函数自动指向下一个位置，就不需要进行++
+    else iter ++ ;    //当没有进行删除的时候，迭代器++
+}
+```
+
++ $remove()$ 函数：
+
+  $remove$ 是个stl的通用算法 `std::remove(first,last,val)` 移除 $[first, last)$ 范围内等于 $val$ 的元素在$vector$ 里面用就类似于 `iter=std::remove(vec.begin(), vec.end(), val)` 但这个函数只是把 $val$ 移到$vec$ 的末尾，并不真正删除,真正删除还是要调用一次erase函数
+
+```c++
+veci.erase(remove(vec.begin(),vec.end(),3),vec.end());
+```
+
++ 重复元素
 
 ### 并查集（路经压缩）
 
@@ -1330,19 +1552,35 @@ inline int dinic(int x,ll flow){
 
 ## 数论
 
+### 线性组合数
+
+```c++
+int frac[N], inv[N];
+int qpow(int a, int b) {
+    int s = 1;
+    for (; b; a = 1ll * a * a % mod, b >>= 1) if (b & 1) s = 1ll * s * a % mod;
+    return s;
+}
+void set_up() {
+    frac[0] = inv[0] = 1;
+    for (int i = 1; i <= 1000; i++) frac[i] = 1ll * frac[i - 1] * i % mod;
+    inv[1000] = qpow(frac[1000], mod - 2);
+    for (int i = 999; i; i--)
+    inv[i] = 1ll * inv[i + 1] * (i + 1) % mod;
+}
+inline int C(int n, int m) {
+    if (n < m) return 0;
+    return 1ll * frac[n] * inv[m] % mod * inv[n - m] % mod;
+}
+```
+
 ### 快速幂
 
 ```c++
-// C++ Version
-int ksm(int a, int b, int c) {
-  int res = 1;
-  a%=c;
-  while (b > 0) {
-    if (b & 1) res = res * a % c;
-    a = a * a % c;
-    b >>= 1;
-  }
-  return res;
+int qpow(int a, int b) {
+    int s = 1;
+    for (; b; a = 1ll * a * a % mod, b >>= 1) if (b & 1) s = 1ll * s * a % mod;
+    return s;
 }
 ```
 
@@ -1352,7 +1590,7 @@ int ksm(int a, int b, int c) {
 int gcd(int a, int b){
    return a % b ? gcd(b, a % b) : b;
 }
-int lmp(int a,int b){
+int lmp(int a, int b){
    return a*b/gcd(a,b);
 }
 ```
@@ -1390,10 +1628,8 @@ void euler()
 ### 线性同余方程
 
 ```c++
-long long exgcd(long long a, long long b, long long &x, long long &y)
-{
-    if (!b)
-    {
+long long exgcd(long long a, long long b, long long &x, long long &y) {
+    if (!b) {
         x = 1, y = 0;
         return a;
     }
