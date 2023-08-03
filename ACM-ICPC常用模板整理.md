@@ -1734,6 +1734,7 @@ inline int C(int n, int m) {
 
 ```c++
 int qpow(int a, int b) {
+    a %= mod;
     int s = 1;
     for (; b; a = 1ll * a * a % mod, b >>= 1) if (b & 1) s = 1ll * s * a % mod;
     return s;
