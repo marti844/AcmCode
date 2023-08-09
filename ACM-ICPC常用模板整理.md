@@ -7,6 +7,8 @@
 ## 文件头
 
 ```c++
+#pragma GCC optimize(2)
+#pragma GCC optimize(3)
 #include<bits/stdc++.h>
 #define int long long
 #define cin std::cin
@@ -473,6 +475,82 @@ int32_t  main() {
 顾名思义，概率DP就是动态规划求概率的问题。一般来说，我们将dp数组存放的数据定义为到达此状态的概率，那么我们初值设置就是所有初始状态概率为1，最终答案就是终末状态dp值了。
 
 我们在进行状态转移时，是从初始状态向终末状态顺推，转移方程中大致思路是按照当前状态去往不同状态的位置概率转移更新DP，且大部分是加法。
+
+### 记忆化DP
+
+题目连接：[花店橱窗](https://ac.nowcoder.com/acm/contest/24213/1005)
+
+```c++
+#pragma GCC optimize(2)
+#pragma GCC optimize(3)
+#include<bits/stdc++.h>
+#define int long long
+#define cin std::cin
+#define cout std::cout
+#define fastio ios::sync_with_stdio(0), cin.tie(nullptr)
+using namespace std;
+const int N = 1e5 + 10;
+const int mod = 1e9 + 7;
+const int inf = 0x3fffffffffffffff;
+char buf[1<<21],*p1=buf,*p2=buf;
+inline char getc(){
+    return p1==p2&&(p2=(p1=buf)+fread(buf,1,1<<21,stdin),p1==p2)?EOF:*p1++;
+}
+inline int read(){
+    int ret = 0,f = 0;char ch = getc();
+    while (!isdigit (ch)){
+        if (ch == '-') f = 1;
+        ch = getc();
+    }
+    while (isdigit (ch)){
+        ret = ret * 10 + ch - 48;
+        ch = getc();
+    }
+    return f?-ret:ret;
+}
+int n, f, v;
+int dp[105][105], a[105][105];
+vector<int> ans[105];
+
+// 应用答案回溯
+void out_ans(int x, int y) {
+    if (!x) return;
+    if (dp[x][y] == dp[x][y - 1]) {
+        out_ans(x, y - 1);
+    } else {
+        out_ans(x - 1, y - 1);
+        cout << y << ' ';
+    }
+}
+inline void solve() {
+    cin >> f >> v;
+    for(int i = 1; i <= f; ++i) {
+        for(int j = 1; j <= v; ++j) {
+            cin >> a[i][j];
+        }
+        dp[i][i - 1] = -inf;
+    }
+    for(int i = 1; i <= f; ++i) {
+        for(int j = i; j <= v; ++j) {
+            dp[i][j] = max(dp[i][j - 1], dp[i - 1][j - 1] + a[i][j]);
+        }
+    }
+    cout << dp[f][v] << endl;
+    out_ans(f, v);
+    return ;
+
+}
+signed main() {
+    fastio;
+    int T;
+    // cin >> T;
+    T = 1;
+    while(T --) {
+        memset(dp, 0, sizeof(dp));
+        solve();
+    }
+}
+```
 
 ## 排序
 
@@ -1712,18 +1790,21 @@ inline int dinic(int x,ll flow){
 
 ```c++
 int frac[N], inv[N];
+// 快速幂
 int qpow(int a, int b) {
+    a %= mod;
     int s = 1;
     for (; b; a = 1ll * a * a % mod, b >>= 1) if (b & 1) s = 1ll * s * a % mod;
     return s;
 }
+// 线性求逆元
 void set_up() {
     frac[0] = inv[0] = 1;
-    for (int i = 1; i <= 1000; i++) frac[i] = 1ll * frac[i - 1] * i % mod;
-    inv[1000] = qpow(frac[1000], mod - 2);
-    for (int i = 999; i; i--)
-    inv[i] = 1ll * inv[i + 1] * (i + 1) % mod;
+    for (int i = 1; i <= N - 1; i++) frac[i] = 1ll * frac[i - 1] * i % mod;
+    inv[N - 1] = qpow(frac[N - 1], mod - 2);
+    for (int i = N - 2; i; i--) inv[i] = 1ll * inv[i + 1] * (i + 1) % mod;
 }
+// O(1)计算组合数
 inline int C(int n, int m) {
     if (n < m) return 0;
     return 1ll * frac[n] * inv[m] % mod * inv[n - m] % mod;
@@ -1739,13 +1820,17 @@ int qpow(int a, int b) {
     for (; b; a = 1ll * a * a % mod, b >>= 1) if (b & 1) s = 1ll * s * a % mod;
     return s;
 }
+// 求a的逆元
+int inv = qpow(a, mod - 2);
 ```
 
 ### gcd/lmp
 
 ```c++
 int gcd(int a, int b){
-   return a % b ? gcd(b, a % b) : b;
+    if(a == 0) return b;
+    else if(b == 0) return a;
+    return a % b ? gcd(b, a % b) : b;
 }
 int lmp(int a, int b){
    return a*b/gcd(a,b);
@@ -1794,17 +1879,19 @@ void euler()
 ### 线性同余方程
 
 ```c++
-long long exgcd(long long a, long long b, long long &x, long long &y) {
+int exgcd(int a, int b, int &x, int &y) {       // a为分母，b为模数，x为所求
     if (!b) {
         x = 1, y = 0;
         return a;
     }
-    long long  d = exgcd(b, a % b, x, y);
-    long long  z = x;
+    int  d = exgcd(b, a % b, x, y);
+    int  z = x;
     x = y;
     y = z - a / b * y;
     return d;
 }
+int res = exgcd(mu, mod, x, y);
+x = (x * zi / res % mod) % mod;
 ```
 
 ### 高精度
@@ -1981,6 +2068,33 @@ int main()
 }
 ```
 
+### 卢卡斯定理
+
+```c++
+const int maxn=100010;
+long long mul[maxn];
+void init(long long p){
+    mul[0] = 1;
+    for(long long i = 1; i <= p; i++) mul[i] = mul[i-1] * i % p;
+}
+// 卢卡斯定理要求模数必须是 素数
+long long quickpow(long long a,long long b,long long c){  // c 是模数
+    long long ans=1;a=a%c;
+    while(b)
+    {
+        if(b&1) ans=(ans*a)%c;
+        b>>=1;a=(a*a)%c;
+    }
+    return ans;
+}
+long long c(long long n,long long m,long long p){  // p 是模数
+    return (m>n)?0:((mul[n]*quickpow(mul[m],p-2,p))%p*quickpow(mul[n-m],p-2,p)%p);
+}
+long long lucas(long long n,long long m,long long p){
+    return (m==0)?1:c(n%p,m%p,p)*lucas(n/p,m/p,p)%p;
+}
+```
+
 ## 字符串
 
 ### 字符串哈希
@@ -2007,63 +2121,56 @@ unsigned long long gethash()
 
 ```c++
 const int MAXN=1000100;
-    char s[MAXN],t[MAXN];//s是主串；t是模式串
-    int m,n;//m为模式串长度；n为主串长度
-    int nxt[MAXN];
-
-    void kmp_pre()
-    {
-        int i,j;
-        j=nxt[0]=-1;
-        i=0;
-        while(i<m)
-        {
-            if(j==-1||t[i]==t[j])nxt[++i]=++j;
-            else j=nxt[j];
-        }
+char s[MAXN],t[MAXN];//s是主串；t是模式串
+int m,n;//m为模式串长度；n为主串长度
+int nxt[MAXN];
+void kmp_pre() {
+    int i, j;
+    j = nxt[0] = -1;
+    i = 0;
+    while(i < m) {
+        if(j == -1 || t[i] == t[j]) nxt[++i] = ++j;
+        else j = nxt[j];
     }
-    //出现次数kmp
-    int kmp_count()
+}
+//出现次数kmp
+int kmp_count() {
+    int i = 0, j = 0;
+    int ans = 0;
+    if(m == 1 && n == 1)
     {
-        int i=0,j=0;
-        int ans=0;
-        if(m==1&&n==1)
-        {
-            if(t[0]==s[0]) return 1;
-            else return 0;
-        }
-        kmp_pre();
-        for(i=0;i<n;i++)
-        {
-            while(j>0&&s[i]!=t[j])j=nxt[j];
-            if(s[i]==t[j])j++;
-            if(j==m)
-            {
-                ans++;
-                j=nxt[j];
-            } 
-        }
-        return ans;
+        if(t[0] == s[0]) return 1;
+        else return 0;
     }
-    //返回位置kmp
-    int KMP(){
- 
-    int i=0;
-    int j=0;
- 
-    while(i<n&&j<m){
-        if(j==-1||t[i]==p[j]){
-            i++;
-            j++;
-            if(j==m&&i!=n){//当模式串到达结尾时，回到指定位置
-                j=nxt[j];
+    kmp_pre();
+    for(i = 0; i < n; i++)
+    {
+        while(j > 0 && s[i] != t[j]) j = nxt[j];
+        if(s[i] == t[j]) j ++;
+        if(j == m)
+        {
+            ans ++;
+            j = nxt[j];
+        } 
+    }
+    return ans;
+}
+//返回位置kmp
+int KMP() {
+    kmp_pre();
+    int i = 0;
+    int j = 0;
+    while(i < n && j < m) {
+        if(j == -1 || t[i] == p[j]) {
+            i ++;
+            j ++;
+            if(j == m && i != n){//当模式串到达结尾时，回到指定位置
+                j = nxt[j];
             }
-        }
-        else{
-           j=nxt[j];
+        } else {
+           j = nxt[j];
         }
     }
- 
     return j;//返回前缀的位置
 }
 ```
@@ -2116,7 +2223,317 @@ int main()
 
 ### AC自动机
 
+```c++
+模板一：
+#include<bits/stdc++.h>//求解文本串中出现了多少个模式串
+#define magic ios::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+using namespace std;
+const int maxn=1e6+10;
+int tri[maxn][26];
+int fail[maxn];
+int tot;
+int vis[maxn];
+void Trie(string ms)
+{
+    int p=0;
+    int len=ms.length();
+    for(int i=0;i<len;i++)
+    {
+        int c=ms[i]-'a';
+        if(!tri[p][c]) tri[p][c]=++tot;
+        p=tri[p][c];
+    }
+    vis[p]++;
+    return ;
+}
+void buildac()
+{
+    queue<int> q;
+    for(int i=0;i<26;i++)
+    {
+        if(tri[0][i]) q.push(tri[0][i]);
+    }
 
+    while(!q.empty())
+    {
+        int u=q.front();
+        q.pop();
+
+        for(int i=0;i<26;i++)
+        {
+            if(tri[u][i])
+            {
+                fail[tri[u][i]]=tri[fail[u]][i];
+                q.push(tri[u][i]);
+            }
+            else tri[u][i]=tri[fail[u]][i];
+        }
+    }
+    return ;
+}
+int query(string ts)
+{
+    int len=ts.length();
+    int u=0,res=0;
+    for(int i=0;i<len;i++)
+    {
+        u=tri[u][ts[i]-'a'];
+        for(int j=u;j&&vis[j]!=-1;j=fail[j])
+        {
+            res+=vis[j];
+            vis[j]=-1;
+        }
+    }
+    return res;
+}
+int main()
+{
+    magic 
+    int n;
+    cin>>n;
+    string ms;
+    for(int i=1;i<=n;i++)
+    {
+        cin>>ms;
+        Trie(ms);
+    }
+
+    buildac();
+
+    string ts;
+    cin>>ts;
+
+    int res=query(ts);
+    cout<<res<<'\n';
+    return 0;
+}
+
+
+模板二：
+#include<bits/stdc++.h>//可以计算在文本串中出现最多的模式串并输出这个模式串
+using namespace std;
+const int maxn1=50000;
+const int maxn2=1000010;
+char t[maxn2],s[160][maxn1];
+int n,num[160],e[maxn2],val[maxn2];
+int trie[maxn1][30],cnt,fail[maxn1];
+void init()
+{
+	memset(fail,0,sizeof(fail));
+	memset(num,0,sizeof(num));
+	memset(e,0,sizeof(e));
+	memset(trie,0,sizeof(trie));
+	memset(val,0,sizeof(val));
+	cnt=0;
+}
+void insert(int l,char *s ,int id)
+{
+	int p=0;
+	
+	for(int i=1;i<=l;i++)
+	{
+		int c=s[i]-'a';
+		if(!trie[p][c]) trie[p][c]=++cnt;
+		p=trie[p][c];
+	}
+	e[p]=id;//需要注意的是
+	//这个地方要注意标记下这个模式串最后一次出现的索引
+	//如果有重复的模式串出现的话，这个地方的e[p]会被覆盖掉
+	//但是并没有什么问题，因为这个求得是出现次数最多的模式串
+	//相同的模式串不需要进行重复输出。
+}
+void build()
+{
+	queue<int> q;
+	
+	for(int i=0;i<26;i++)
+	{
+		if(trie[0][i]) q.push(trie[0][i]);
+	}
+	
+	while(!q.empty())
+	{
+		int p=q.front();
+		q.pop();
+		
+		for(int i=0;i<26;i++)
+		{
+			if(trie[p][i])
+			{
+				fail[trie[p][i]]=trie[fail[p]][i];
+				q.push(trie[p][i]);
+			}
+			else
+			{
+				trie[p][i]=trie[fail[p]][i];
+			}
+		}
+	}
+}
+int query()
+{
+	int p=0,res=0;
+	int l=strlen(t+1);
+	
+	for(int i=1;i<=l;i++)
+	{
+		p=trie[p][t[i]-'a'];
+		for(int j=p;j;j=fail[j])
+		//扫描文本串的一个字符，就暴跳一次fail指针。
+		//把相对应的最长后缀也给记上。
+		//虽然记录的val[j]不一定是一个模式串的尾结点
+		//但是我们在确定最大值的时候会通过e[i]来进行判断，只判断尾结点
+		//不需要进行去重，因为相对应的模式串在文本串中可能出现很多次。
+		{
+			++val[j];//直接暴力加就可以
+		}
+	}
+	
+	for(int i=1;i<=cnt;i++)
+	{
+		if(e[i])//先进行判断是不是尾结点
+		{
+			res=max(res,val[i]);//取最大值
+		    num[e[i]]=val[i];//把每个模式串都记录下自己出现了多少次
+		}
+	}
+	
+	return res;//最后返回自己的值
+}
+int main()
+{
+	while(scanf("%d",&n)&&n)
+	{
+		init();
+		for(int i=1;i<=n;i++)
+		{
+			scanf("%s\n",s[i]+1);
+			insert(strlen(s[i]+1),s[i],i);
+		}
+		scanf("%s\n",t+1);
+		build();
+		int mx=query();
+		printf("%lld\n",mx);
+		for(int i=1;i<=n;i++)
+		{
+			if(num[i]==mx)//判断出现次数最多的，因为也有可能会出现重复的模式串，他们在文本串中出现的次数很可能是相同的
+			{
+				printf("%s\n",s[i]+1);//相对应的打印出来就可以
+			}
+		}
+	}
+	return 0;
+} 
+
+模板三：
+#include<bits/stdc++.h>//求解每个模式串在文本串中出现了多少次
+#define magic ios::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+using namespace std;
+const int maxn=2e6+10;
+int tri[maxn][26];
+int vis[maxn],rev[maxn],fail[maxn];
+int ans[maxn],res[maxn],indeg[maxn];
+int tot;
+void Trie(string ms,int id)
+{
+    int len=ms.length();
+    int p=0;
+    for(int i=0;i<len;i++)
+    {
+        if(!tri[p][ms[i]-'a']) tri[p][ms[i]-'a']=++tot;
+        p=tri[p][ms[i]-'a'];
+    }
+    if(!vis[p]) vis[p]=id;
+    rev[id]=vis[p];
+    return ;
+}
+
+void build()
+{
+    queue<int> q;
+    for(int i=0;i<26;i++)
+    {
+        if(tri[0][i]) q.push(tri[0][i]);
+    }
+
+    while(!q.empty())
+    {
+        int u=q.front();
+        q.pop();
+
+        for(int i=0;i<26;i++)
+        {
+            if(!tri[u][i])
+            {
+                tri[u][i]=tri[fail[u]][i];
+                continue;
+            }
+            else 
+            {
+                fail[tri[u][i]]=tri[fail[u]][i];
+                indeg[tri[fail[u]][i]]++;
+                q.push(tri[u][i]);
+            }
+        }
+    }
+    return ;
+}
+void query(string ts)
+{
+    int len=ts.length();
+    int u=0;
+
+    for(int i=0;i<len;i++)
+    {
+        int c=ts[i]-'a';
+        ans[tri[u][c]]++;
+        u=tri[u][c];
+    }
+}
+void topu()
+{
+    queue<int> q;
+    for(int i=1;i<=tot;i++)
+    {
+        if(!indeg[i]) q.push(i);
+    }
+    while(!q.empty())
+    {
+        int ft=q.front();
+        q.pop();
+
+        res[vis[ft]]=ans[ft];
+
+        int u=fail[ft];
+        ans[u]+=ans[ft];
+
+        if(!(--indeg[u])) q.push(u);
+    }
+    return ;
+}
+int main()
+{
+    magic 
+    int n;
+    cin>>n;
+    string ms;
+    for(int i=1;i<=n;i++)
+    {
+        cin>>ms;
+        Trie(ms,i);
+    }
+    build();
+    string ts;
+    cin>>ts;
+    query(ts);
+    topu();
+    for(int i=1;i<=n;i++)
+    {
+        cout<<res[rev[i]]<<"\n";
+    }
+    return 0;
+}
+```
 
 ### Tire树
 
@@ -2146,6 +2563,129 @@ struct trie {
     return exist[p];
   }
 };
+```
+
+### 后缀数组
+
+```c++
+/*
+    Problem: (询问一个字符串中有多少至少出现两次的子串)
+    Content: SA's Code and Explanation
+    Author : WangYongfeng
+*/
+
+/*
+    height[i]指的是排名为i的后缀与排名为i-1的后缀的最长公共前缀，即L C P ( i ? 1 , i )
+    h[i]指的则是以i为开头的后缀与排名在它前一位的后缀的最长公共前缀，即L C P ( r a n k [ i ] ? 1 , r a n k [ i ] ) LCP(rank[i]-1,rank[i])LCP(rank[i]?1,rank[i])
+*/
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 1000005;
+// 后缀数组求解时间复杂度是n(log n)^2
+char ch[MAXN], All[MAXN];
+int SA[MAXN], Rank[MAXN], Height[MAXN], tax[MAXN], tp[MAXN], a[MAXN], n, m;
+char str[MAXN]; // 读入的文本串
+int H[MAXN];
+// rank[i] 第i个后缀的排名; SA[i] 排名为i的后缀位置; Height[i] 排名为i的后缀与排名为(i-1)的后缀的LCP
+// tax[i] 基数排序辅助数组; tp[i] rank的辅助数组(基数排序中的第二关键字),与SA意义一样。
+// a为原串,n为串的长度
+//
+void RSort()
+{
+    // rank第一关键字,tp第二关键字。
+    for (int i = 0; i <= m; i++)
+        tax[i] = 0;
+    for (int i = 1; i <= n; i++)
+        tax[Rank[tp[i]]]++;
+    for (int i = 1; i <= m; i++)
+        tax[i] += tax[i - 1];
+    for (int i = n; i >= 1; i--)
+        SA[tax[Rank[tp[i]]]--] = tp[i]; // 确保满足第一关键字的同时，再满足第二关键字的要求
+} // 数排序,把新的二元组排序。
+
+int cmp(int *f, int x, int y, int w) { return f[x] == f[y] && f[x + w] == f[y + w]; }
+// 通过二元组两个下标的比较，确定两个子串是否相同
+
+void Suffix()
+{
+    // SA
+    for (int i = 1; i <= n; i++)
+        Rank[i] = a[i], tp[i] = i;
+    m = 127, RSort(); // 一开始是以单个字符为单位，所以(m = 127)
+
+    for (int w = 1, p = 1, i; p < n; w += w, m = p)
+    { // 把子串长度翻倍,更新rank
+
+        // w 当前一个子串的长度; m 当前离散后的排名种类数
+        // 当前的tp(第二关键字)可直接由上一次的SA的得到
+        for (p = 0, i = n - w + 1; i <= n; i++)
+            tp[++p] = i; // 长度越界,第二关键字为0
+        for (i = 1; i <= n; i++)
+            if (SA[i] > w)
+                tp[++p] = SA[i] - w;
+
+        // 更新SA值,并用tp暂时存下上一轮的rank(用于cmp比较)
+        RSort(), swap(Rank, tp), Rank[SA[1]] = p = 1;
+
+        // 用已经完成的SA来更新与它互逆的rank,并离散rank
+        for (i = 2; i <= n; i++)
+            Rank[SA[i]] = cmp(tp, SA[i], SA[i - 1], w) ? p : ++p;
+    }
+    // 离散：把相等的字符串的rank设为相同。
+    // LCP
+    int j, k = 0;
+    for (int i = 1; i <= n; Height[Rank[i++]] = k)
+        for (k = k ? k - 1 : k, j = SA[Rank[i] - 1]; a[i + k] == a[j + k]; ++k)
+            ;
+    // 这个知道原理后就比较好理解程序
+    // 求H[i];
+    for (int i = 1; i <= n; i++)
+    {
+        H[i] = Height[Rank[i]];
+    }
+}
+
+void Init()
+{
+    scanf("%s", str);
+    n = strlen(str);
+    for (int i = 0; i < n; i++)
+        a[i + 1] = str[i];
+}
+
+int main()
+{
+    Init();
+    Suffix();
+    cout << "SA输出如下" << endl; // SA[i]为第i小的后缀串的起始位置（也就是后缀串的编号）
+    for (int i = 1; i <= n; i++)
+    {
+        printf("%d ", SA[i]);
+    }
+    printf("\n");
+    cout << "Rank输出如下" << endl; // 起始位置为i的后缀串排第几（后缀i的排名）
+    for (int i = 1; i <= n; i++)
+    {
+        printf("%d ", Rank[i]);
+    }
+    printf("\n");
+    cout << "height(排名相邻)输出如下" << endl; // height[1]没有意义。
+    for (int i = 1; i <= n; i++)                // 排名为i的后缀与它排名前一个的后缀的最长公共前缀
+    {                                           //排名为i的后缀与排名为i-1的后缀的最长公共前缀
+        printf("%d ", Height[i]);
+    }
+    printf("\n");
+    cout << "H(顺序临近)输出如下" << endl; // 第i个串的排名与其前一名的LCP
+    for (int i = 1; i <= n; i++)
+    {
+        printf("%d ", H[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
 ```
 
 ### 后缀自动机
