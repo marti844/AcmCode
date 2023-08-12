@@ -34,6 +34,18 @@ inline int read(){
     }
     return f?-ret:ret;
 }
+inline void solve() {
+
+}
+signed main() {
+    int T;
+    // cin >> T;
+    T = 1;
+    while(T --) {
+        solve();
+    }
+    return 0;
+}
 ```
 
 ## 读入输出
@@ -801,6 +813,83 @@ veci.erase(remove(vec.begin(),vec.end(),3),vec.end());
 
 + 重复元素
 
+### bitset用法
+
+bitset可以说是一个多位二进制数，每八位占用一个字节，因为支持基本的位运算，所以可用于状态压缩，n位bitset执行一次位运算的时间复杂度可视为n/32.
+
+输出只能用cout
+
+#### 1.构造：
+
+```c++
+int a = 5;
+string b = "1011";
+char c[4] = {'1','0','1','0'};
+bitset<10>s1(string("1001"));     //0000001001
+bitset<10>s2(int(8));             //0000001000
+bitset<10>s3(8);                  //0000001000
+bitset<4>s4(string("10001"));     //1000
+bitset<4>s5(int(32));             //0000
+bitset<4>s6;                      //0000
+bitset<4>s7(a);                   //0101
+bitset<4>s8(b);                   //1011
+bitset<4>s9(c);                   //1010
+```
+
++ 不够的位数自动补0
++ size小于附的值时，int取后几位，string取前几位
+
++ 不进行赋初值时，默认全部为0
+
+#### 2.运算：
+
+```c++
+bitset<4>s1(string("1001"));
+bitset<4>s2(string("1000"));
+s1[1] = 1;                    
+cout<<s1[0]<<endl;              //1
+cout<<s1<<endl;                 //1011
+cout<<(s1==s2)<<endl;           //0
+cout<<(s1!=s2)<<endl;           //1
+cout<<(s1^s2)<<endl;            //0011
+cout<<(s1&s2)<<endl;            //1000
+cout<<(s1|s2)<<endl;            //1011
+cout<<(~s1)<<endl;              //0100
+cout<<(s1>>1)<<endl;            //0101
+```
+
+#### 3.函数：
+
+```c++
+bitset<4>s1(string("1001"));
+bitset<4>s2(string("0011"));
+
+cout<<s1.count()<<endl;//用于计算s1中1的个数
+cout<<s1.size()<<endl;//s1的位数
+
+cout<<s1.test(0)<<endl;//用于检查s1[0]是0or1并返回0or1
+cout<<s1.any()<<endl;//检查s1中是否有1，并返回1or0
+cout<<s1.all()<<endl;//检查s1中是否全部为1，并返回0or1
+cout<<s1.none()<<endl;//检查s1中是否全不为1，并返回0or1
+
+// flip
+cout<<s1.flip(2)<<endl;//将参数位取反，0变1，1变0
+cout<<s1.flip()<<endl;//不指定参数时，每一位取反
+
+// set
+cout<<s1.set()<<endl;//不指定参数时，每一位变为１
+cout<<s1.set(3,1)<<endl;//指定两位参数时，将第一参数位的元素变为第二参数的值，第二参数位只能为0or1
+cout<<s1.set(3)<<endl;//只有一个参数时，将参数下标处变为１
+
+// reset
+cout<<s1.reset(4)<<endl;//一个参数时将参数下标处变为０
+cout<<s1.reset()<<endl;//不传参数时将bitset的每一位变为０
+
+string s = s1.to_string();　　//将bitset转换成string
+unsigned long a = s1.to_ulong();　　//将bitset转换成unsigned long
+unsigned long long b = s1.to_ullong();　　//将bitset转换成unsigned long long
+```
+
 ### 并查集（路经压缩）
 
 ```c++
@@ -1397,26 +1486,11 @@ int main()
 
 ## 图论
 
-### 存图
+### 树
 
-```c++
-struct Edge{
-  int to,val,nxt;
-}edge[maxn];
-int head[maxn],cnt;
+#### LCA
 
-inline void init(){
-  memset(head,-1,sizeof head);
-  cnt=0;
-}
 
-inline void addedge(int s,int t,int w){
-  edge[++cnt].to=t;
-  edge[cnt].val=w;
-  edge[cnt].nxt=head[s];
-  head[s]=cnt;
-}
-```
 
 ### 最短路算法
 
@@ -1814,6 +1888,7 @@ inline int C(int n, int m) {
 ### 快速幂
 
 ```c++
+// 取模版本
 int qpow(int a, int b) {
     a %= mod;
     int s = 1;
@@ -1822,6 +1897,12 @@ int qpow(int a, int b) {
 }
 // 求a的逆元
 int inv = qpow(a, mod - 2);
+// 不取模版本
+int qpow(int a, int b) {
+    int s = 1;
+    for (; b; a = 1ll * a * a, b >>= 1) if (b & 1) s = 1ll * s * a;
+    return s;
+}
 ```
 
 ### gcd/lmp
@@ -2172,6 +2253,62 @@ int KMP() {
         }
     }
     return j;//返回前缀的位置
+}
+```
+
+### 扩展KMP
+
+```c++
+#include<bits/stdc++.h>
+#define magic ios::sync_with_stdio(false);cin.tie(0);cout.tie(0);
+using namespace std;
+const int maxn=2e7+5;
+char a[maxn],b[maxn];
+int n,m;
+long long z[maxn],ext[maxn];
+void getz(char *s,int n)//s的每一个后缀与s的LCP
+{
+    long long l=0,r=0;
+    z[1]=n;
+    for(int i=2;i<=n;i++)
+    {
+        if(i>r)
+        {
+            while(s[i+z[i]]==s[z[i]+1]) z[i]++;//超出范围的情况直接暴力枚举
+            l=i,r=i+z[i]-1;//暴力枚举必然会更新维护区间
+        }
+        else if(z[i-l+1]<r-i+1) //可以直接通过前面已经获得的信息得到
+        {
+            z[i]=z[i-l+1];
+        }
+        else //前方的前缀过长，可取一部分，然后继续暴力枚举
+        {
+            z[i]=r-i+1;
+            while(s[i+z[i]]==s[z[i]+1]) z[i]++;
+            l=i,r=i+z[i]-1;
+        }
+    }
+}
+void getext(char *s1,int n,char*s2,int m)//s1(文本串)的每一个后缀与s2(模式串)的LCP，结果即数组ext
+{
+    long long l=0,r=0;
+    for(int i=1;i<=n;i++)
+    {
+        if(i>r)
+        {
+            while(i+ext[i]<=n&&ext[i]+1<=m&&s1[i+ext[i]]==s2[ext[i]+1])
+            ext[i]++;
+            l = i, r = i + ext[i] - 1;
+        }
+        else if(z[i-l+1]<r-i+1) ext[i] = z[i - l + 1];
+        else
+        {
+            ext[i]=r-i+1;
+            while(i+ext[i]<=n&&ext[i]+1<=m&&s2[ext[i]+1]==s1[i+ext[i]])
+            ext[i]++;
+            l=i,r=i+ext[i]-1;
+        }
+    }
 }
 ```
 
@@ -2764,6 +2901,36 @@ int main()
 		printf("%-4d ",a[i]);
 	printf("\n");
 	return 0;
+}
+```
+
+#### 计算乱序到升序最小交换次数
+
+```c++
+int getMinSwaps(vector<int> &nums){
+    //排序
+    vector<int> nums1(nums);
+    sort(nums1.begin(),nums1.end());
+    unordered_map<int,int> m;
+    int len = nums.size();
+    for (int i = 0; i < len; i++){
+        m[nums1[i]] = i;//建立每个元素与其应放位置的映射关系
+    }
+ 
+    int loops = 0;//循环节个数
+    vector<bool> flag(len,false);
+    //找出循环节的个数
+    for (int i = 0; i < len; i++){
+        if (!flag[i]){//已经访问过的位置不再访问
+            int j = i;
+            while (!flag[j]){
+                flag[j] = true;
+                j = m[nums[j]];//原序列中j位置的元素在有序序列中的位置
+            }
+            loops++;
+        }
+    }
+    return len - loops;
 }
 ```
 
