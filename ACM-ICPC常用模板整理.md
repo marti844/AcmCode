@@ -38,9 +38,10 @@ inline void solve() {
 
 }
 signed main() {
+    fastio;
     int T;
-    // cin >> T;
-    T = 1;
+    cin >> T;
+    // T = 1;
     while(T --) {
         solve();
     }
@@ -49,6 +50,18 @@ signed main() {
 ```
 
 ## 读入输出
+
+### __int128读入读出
+
+```c++
+#define int __int128
+int read(){
+    int ans=0,f=1;char c=getchar();
+    while(!isdigit(c)){if(c=='-')f=-1;c=getchar();}
+    while(isdigit(c)){ans=ans*10+c-'0';c=getchar();}
+    return ans*f;
+}
+```
 
 ### 快读
 
@@ -276,6 +289,35 @@ int main()
     }
     printf("%d\n",len);
     return 0;
+}
+```
+
+### 最长上升子序列
+
+```c++
+int cnt;
+int mp[N];
+int dp[N];//最长上升子序列初始化为inf，非上升为0
+int  zcss()
+{   
+    for(int i=0;i<=cnt+1;i++) dp[i]=1e8;
+    t=0;
+
+    for(int i=0;i<cnt;i++)
+    {
+        int l=0,r=t+1;
+        while((r-l)>1)
+        {
+            int m=(l+r)/2;
+            if(dp[m]<mp[i]) l=m;
+            else r=m;
+        }
+
+        int x=l+1;
+        if(x>t) t=x;
+        dp[x]=min(mp[i],dp[x]);
+    }
+    return t;
 }
 ```
 
@@ -1408,73 +1450,109 @@ signed main() {
 ### 倍增思想（LCA）
 
 ```c++
-#include <bits/stdc++.h>
+#pragma GCC optimize(2)
+#pragma GCC optimize(3)
+#include<bits/stdc++.h>
+#define int long long
+#define cin std::cin
+#define cout std::cout
+#define fastio ios::sync_with_stdio(0), cin.tie(nullptr)
 using namespace std;
-const int maxn = 500050;
-typedef long long ll;
-int fa[maxn][40], d[maxn], head[maxn];
-int lg[maxn];
-int n, m, s;
-int cnt;
-struct node
-{
- int nex, t;
-} e[maxn*2];
-
-void add(int x, int y)
-{
- e[++cnt].nex = head[x];
- e[cnt].t = y;
- head[x] = cnt;
+const int N = 4e4 + 10;
+const int mod = 998244353;
+const int inf = 0x3fffffffffffffff;
+char buf[1<<21],*p1=buf,*p2=buf;
+inline char getc(){
+    return p1==p2&&(p2=(p1=buf)+fread(buf,1,1<<21,stdin),p1==p2)?EOF:*p1++;
 }
-
-void dfs(int f, int fath) // f表示当前节点，fath表示它的父亲节点
-{
- d[f] = d[fath] + 1;
- fa[f][0] = fath;
- for (int i = 1; (1 << i) <= d[f]; i++)
-  fa[f][i] = fa[fa[f][i - 1]][i - 1]; //这个转移可以说是算法的核心之一
-           //意思是f的2^i祖先等于f的2^(i-1)祖先的2^(i-1)祖先
-           // 2^i=2^(i-1)+2^(i-1)
- for (int i = head[f]; i; i = e[i].nex)
-  if (e[i].t != fath)
-   dfs(e[i].t, f);
+inline int read(){
+    int ret = 0,f = 0;char ch = getc();
+    while (!isdigit (ch)){
+        if (ch == '-') f = 1;
+        ch = getc();
+    }
+    while (isdigit (ch)){
+        ret = ret * 10 + ch - 48;
+        ch = getc();
+    }
+    return f?-ret:ret;
 }
-
-int lca(int x, int y)
-{
- if (d[x] < d[y]) //用数学语言来说就是：不妨设x的深度 >= y的深度
-  swap(x, y);
- while (d[x] > d[y])
-  x = fa[x][lg[d[x] - d[y]] - 1]; //先跳到同一深度
- if (x == y)         //如果x是y的祖先，那他们的LCA肯定就是x了
-  return x;
- for (int k = lg[d[x]] - 1; k >= 0; k--) //不断向上跳（lg就是之前说的常数优化）
-  if (fa[x][k] != fa[y][k])    //因为我们要跳到它们LCA的下面一层，所以它们肯定不相等，如果不相等就跳过去。
-   x = fa[x][k], y = fa[y][k];
- return fa[x][0]; //返回父节点
+std::vector<int> G[N], W[N];
+int n, m;
+int fa[N][31], dep[N], cost[N][31];
+inline void init() {
+	for(int i = 1; i < N; ++i) {
+		G[i].clear(), W[i].clear();
+	}
+	memset(fa, 0, sizeof(fa));
+	memset(dep, 0, sizeof(dep));
+	memset(cost, 0, sizeof(cost));
 }
+inline void dfs(int u, int fno) {
+    // 初始化：第 2^0 = 1 个祖先就是它的父亲节点，dep 也比父亲节点多 1。
+    fa[u][0] = fno;
+    dep[u] = dep[fno] + 1;
+    // 初始化：其他的祖先节点：第 2^i 的祖先节点是第 2^(i-1) 的祖先节点的第2^(i-1) 的祖先节点。
+    for(int i = 1; i <= 30; ++i) {
+        fa[u][i] = fa[fa[u][i - 1]][i - 1];
+        cost[u][i] = cost[fa[u][i - 1]][i - 1] + cost[u][i - 1];
+    }
+    int sz = G[u].size();
+    for(int i = 0; i < sz; ++i) {
+        if(G[u][i] == fno) continue;
+        cost[G[u][i]][0] = W[u][i];
+        dfs(G[u][i], u);
+    }
+}
+int lca(int x, int y) {
+	if(dep[x] > dep[y]) swap(x, y);
+	int tmp = dep[y] - dep[x], ans = 0;
+	for(int j = 0; tmp; ++j, tmp >>= 1) {
+		if (tmp & 1) ans += cost[y][j], y = fa[y][j];
+	}
+    
+	if(y == x) return ans;
+	for(int j = 30; j >= 0 && y != x; --j) {
+		if (fa[x][j] != fa[y][j]) {
+	        ans += cost[x][j] + cost[y][j];
+	        x = fa[x][j];
+	        y = fa[y][j];
+	    }
+	}
+	ans += cost[x][0] + cost[y][0];
+	return ans;
 
-int main()
-{
- cin >> n >> m >> s;
- for (int i = 1; i <= n - 1; i++)
- {
-  int x, y;
-  cin >> x >> y;
-  add(x, y);
-  add(y, x);
- }
- for (int i = 1; i <= n; i++)       //预先算出log_2(i)+1的值，用的时候直接调用就可以了
-  lg[i] = lg[i - 1] + (1 << lg[i - 1] == i); //看不懂的可以手推一下
- dfs(s, s);
- for (int i = 1; i <= m; i++)
- {
-  int x, y;
-  cin >> x >> y;
-  cout << lca(x, y) << endl;
- }
- system("pause");
+}
+inline void solve() {
+    cin >> n >> m;
+    for(int i = 1; i < n; ++i) {
+        int s, t, w;
+        cin >> s >> t >> w;
+        G[s].push_back(t);
+        G[t].push_back(s);
+        W[s].push_back(w);
+        W[t].push_back(w);
+    }
+    dfs(1, 0);
+    // cin >> m;
+    for(int i = 1; i <= m; ++i) {
+    	int x, y;
+    	cin >> x >> y;
+    	cout << lca(x, y) << endl;
+    }
+    return;
+
+}
+signed main() {
+    fastio;
+    int T;
+    cin >> T;
+    // T = 1;
+    while(T --) {
+    	init();
+        solve();
+    }
+    return 0;
 }
 ```
 
@@ -2825,7 +2903,89 @@ int main()
 }
 ```
 
-### 后缀自动机
+### 后缀自动机（SAM）
+
+```c++
+#include <cstdio>
+#include <cstring>
+const int maxn = 2000006;
+const int maxc = 27;
+int tot = 1, last = 1; // last -> 旧主串
+int fa[maxn], len[maxn], size[maxn];
+// fa -> fail  fa[x]的right集合一定包含x   fa[x]一定是x的后缀
+// len[x] -> x为后缀最长串长度
+// size[x] -> x 号节点表示的right集合的大小
+// 1 号节点为初始节点
+//求出了right集合后在后缀自动机上跑，跑到某个点时，此时的right的大小，亦表示当前匹配到的这个字符串出现次数
+int son[maxn][maxc]; // son[p][c] -> 在p所代表的集合后加c字符到，该字符c是哪个节点
+//{{{构建SAM
+void extend(int c)
+{
+	int p = last, np = ++tot;//p是旧主串，现在的点是新串，tot表示状态的个数
+	last = tot, len[np] = len[p] + 1;//更新旧主串，新状态即是新添加了一个点，长度为加1，是一个连续的转移
+	while (p && !son[p][c])//不断的去跳后缀，因为所有对应的后缀都可以添加一个c字符
+		son[p][c] = np, p = fa[p]; //跳后缀 它们全都可以加一个c
+	//若当前p有c了表示后面所能表示的后缀有节点集合表示了(因为曾经出现过)
+	//要么就是所有之前的后缀都需要添加上这个c，要么就是所有之前的后缀都已经有了对应的表示。
+	if (!p)
+		fa[np] = 1; //表示c从未出现过 它的后缀为空
+		//如果出现过的话在上一个的while循环里最终p会跳成1，而不是0.如果是0的话说明之前从来都没有出现过
+		//没有出现过就给它赋值成从根点出来的东西。
+	else
+	{//否则就是这个后缀已经出现过，进行处理。p已经跳到1并且son[p][c]已经有了对应的表示
+	//要处理这两个以c为末尾的节点
+		int q = son[p][c];//q指这个对应的表示，也就是之前已经存在这个字符串的对应表示。
+		if (len[q] == len[p] + 1)//是一个连续的转移
+			fa[np] = q; // q是新主串的后缀，连续的转移，可以直接添加
+		else//否则就是q会更大，也就是意味着q表示的不仅是x+c这个字符串，还有更长的字符串也是在q的表示中
+		{//需要将q状态进行分成两个子状态，需要先进行复制。第一个子状态的长度就是len[p]+1，更新q为这个子状态，然后q的后缀链接指向复制出来的状态
+
+			//即len[q]>len[p]+1
+			int nq = ++tot;		  //不是新主串的后缀 因为p是新主串的后缀 而len[q]>len[p]+1且q还没被跳过
+			len[nq] = len[p] + 1; // p的endpos多了个n 所以要新节点 表示由p+c得到的后缀 即nq
+			fa[nq] = fa[q];		  // nq只是endpos变多 其样子仍是原来那样  其后缀仍是原来的后缀
+			fa[np] = fa[q] = nq;  // nq 是 q的后缀 也是新主串的后缀
+			memcpy(son[nq], son[q], sizeof(son[q]));
+			while (son[p][c] == q)//把所有指向原先q的转移全部都重新指向新建立的clone状态。
+				son[p][c] = nq, p = fa[p]; // p的后缀的endpos也多了个n
+		}
+	}
+	size[np] = 1;
+}
+//}}}
+//{{{求right集合大小
+int cnt;
+int head[maxn], nxt[maxn], to[maxn];
+long long ans;
+void add(int u, int v)
+{
+	nxt[++cnt] = head[u], head[u] = cnt, to[cnt] = v;
+}
+inline long long max(long long x, long long y) { return x > y ? x : y; }
+void dfs(int p) //求p所代表的right集合的大小  需先构建出parent树  构建parent树只要让fa[i]向i连边即可  注意根节点为1 应从2开始枚举fa
+{
+	for (int e = head[p]; e; e = nxt[e])
+	{
+		dfs(to[e]);
+		size[p] += size[to[e]];
+	}
+	if(size[p]>1) ans=max(ans,1ll*size[p]*len[p]);
+}
+//}}}
+int main()
+{
+	char s[maxn];
+	scanf("%s", s + 1);
+	int n = strlen(s + 1);
+	for (int i = 1; i <= n; ++i)
+		extend(s[i] - 'a' + 1);
+	for (int i = 2; i <= tot; ++i)
+		add(fa[i], i);
+	dfs(1);
+	printf("%lld\n",ans);
+	return 0;
+}
+```
 
 ## 计算几何
 
